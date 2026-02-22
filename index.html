@@ -1,0 +1,2659 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FHEM Command Assistants</title>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg: #f5f7fa;
+  --card: #ffffff;
+  --border: #dfe3e8;
+  --primary: #2563eb;
+  --primary-hover: #1d4ed8;
+  --primary-light: #eff6ff;
+  --text: #1e293b;
+  --text-muted: #64748b;
+  --danger: #dc2626;
+  --code-bg: #1e293b;
+  --code-text: #e2e8f0;
+  --radius: 8px;
+  --shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.6;
+  padding: 1rem;
+}
+
+.container {
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+h1 {
+  font-size: 1.5rem;
+  margin-bottom: 0.25rem;
+}
+
+.subtitle {
+  color: var(--text-muted);
+  font-size: 0.9rem;
+  margin-bottom: 1rem;
+}
+
+/* Main tab navigation */
+.main-tabs {
+  display: flex;
+  border-bottom: 2px solid var(--border);
+  margin-bottom: 1.5rem;
+}
+
+.main-tab {
+  padding: 0.6rem 1.25rem;
+  border: none;
+  background: none;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  color: var(--text-muted);
+  border-bottom: 2px solid transparent;
+  margin-bottom: -2px;
+  transition: color 0.15s, border-color 0.15s;
+  font-family: inherit;
+}
+
+.main-tab:hover {
+  color: var(--text);
+}
+
+.main-tab.active {
+  color: var(--primary);
+  border-bottom-color: var(--primary);
+}
+
+.tab-panel {
+  display: none;
+}
+
+.tab-panel.active {
+  display: block;
+}
+
+.card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 1.25rem;
+  margin-bottom: 1rem;
+  box-shadow: var(--shadow);
+}
+
+.card-title {
+  font-size: 1rem;
+  font-weight: 600;
+  margin-bottom: 0.75rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.card-title .badge {
+  font-size: 0.7rem;
+  background: var(--primary-light);
+  color: var(--primary);
+  padding: 0.1rem 0.5rem;
+  border-radius: 999px;
+  font-weight: 500;
+}
+
+label {
+  display: block;
+  font-size: 0.85rem;
+  font-weight: 500;
+  margin-bottom: 0.25rem;
+  color: var(--text);
+}
+
+input[type="text"],
+input[type="number"],
+input[type="time"],
+textarea,
+select {
+  width: 100%;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  font-size: 0.9rem;
+  font-family: inherit;
+  color: var(--text);
+  background: var(--card);
+  transition: border-color 0.15s;
+}
+
+input:focus, textarea:focus, select:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(37,99,235,0.1);
+}
+
+input.invalid, textarea.invalid {
+  border-color: var(--danger);
+}
+
+.help {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  margin-top: 0.2rem;
+}
+
+.error-msg {
+  font-size: 0.78rem;
+  color: var(--danger);
+  margin-top: 0.2rem;
+  display: none;
+}
+
+.error-msg.visible {
+  display: block;
+}
+
+/* Tab-style radio group */
+.tab-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.tab-group label {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.4rem 0.85rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  cursor: pointer;
+  font-size: 0.85rem;
+  font-weight: 500;
+  transition: all 0.15s;
+  user-select: none;
+  margin-bottom: 0;
+}
+
+.tab-group label:hover {
+  border-color: var(--primary);
+  background: var(--primary-light);
+}
+
+.tab-group input[type="radio"] {
+  display: none;
+}
+
+.tab-group input[type="radio"]:checked + span {
+  color: var(--primary);
+}
+
+.tab-group label:has(input:checked) {
+  border-color: var(--primary);
+  background: var(--primary-light);
+  color: var(--primary);
+}
+
+/* Inline radio group */
+.radio-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin-bottom: 0.5rem;
+}
+
+.radio-group label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  cursor: pointer;
+  font-weight: 400;
+  margin-bottom: 0;
+}
+
+.radio-group input[type="radio"] {
+  accent-color: var(--primary);
+}
+
+/* Checkbox group */
+.checkbox-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.checkbox-group label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  cursor: pointer;
+  font-weight: 400;
+  margin-bottom: 0;
+}
+
+.checkbox-group input[type="checkbox"] {
+  accent-color: var(--primary);
+}
+
+.sub-options {
+  margin-top: 0.75rem;
+  padding: 0.75rem;
+  background: var(--bg);
+  border-radius: var(--radius);
+}
+
+.sub-options.hidden { display: none; }
+
+.inline-fields {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.inline-fields > div {
+  flex: 1;
+  min-width: 120px;
+}
+
+/* Collapsible */
+.collapsible-toggle {
+  background: none;
+  border: none;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--text);
+  padding: 0;
+  width: 100%;
+  text-align: left;
+  font-family: inherit;
+}
+
+.collapsible-toggle .arrow {
+  transition: transform 0.2s;
+  font-size: 0.75rem;
+}
+
+.collapsible-toggle.open .arrow {
+  transform: rotate(90deg);
+}
+
+.collapsible-content {
+  display: none;
+  margin-top: 0.75rem;
+}
+
+.collapsible-content.open {
+  display: block;
+}
+
+/* Command list */
+.command-entry {
+  display: flex;
+  gap: 0.5rem;
+  align-items: start;
+  margin-bottom: 0.5rem;
+}
+
+.command-entry input {
+  flex: 1;
+}
+
+.command-entry .cmd-number {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  min-width: 1.5rem;
+  padding-top: 0.55rem;
+  text-align: right;
+}
+
+.btn-remove {
+  background: none;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  color: var(--danger);
+  cursor: pointer;
+  padding: 0.45rem 0.6rem;
+  font-size: 0.85rem;
+  line-height: 1;
+  transition: all 0.15s;
+}
+
+.btn-remove:hover {
+  background: #fef2f2;
+  border-color: var(--danger);
+}
+
+.btn-add {
+  background: none;
+  border: 1px dashed var(--border);
+  border-radius: var(--radius);
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: 0.45rem 0.85rem;
+  font-size: 0.85rem;
+  transition: all 0.15s;
+  font-family: inherit;
+}
+
+.btn-add:hover {
+  border-color: var(--primary);
+  color: var(--primary);
+  background: var(--primary-light);
+}
+
+/* Preview */
+.preview-box {
+  background: var(--code-bg);
+  color: var(--code-text);
+  border-radius: var(--radius);
+  padding: 1rem;
+  font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+  font-size: 0.85rem;
+  line-height: 1.7;
+  white-space: pre-wrap;
+  word-break: break-all;
+  position: relative;
+  min-height: 3rem;
+}
+
+.preview-box .placeholder {
+  color: #64748b;
+  font-style: italic;
+}
+
+.btn-copy {
+  position: absolute;
+  top: 0.5rem;
+  right: 0.5rem;
+  background: rgba(255,255,255,0.1);
+  border: 1px solid rgba(255,255,255,0.2);
+  color: var(--code-text);
+  border-radius: var(--radius);
+  padding: 0.3rem 0.7rem;
+  font-size: 0.78rem;
+  cursor: pointer;
+  transition: all 0.15s;
+  font-family: inherit;
+}
+
+.btn-copy:hover {
+  background: rgba(255,255,255,0.2);
+}
+
+.btn-copy.copied {
+  background: #16a34a;
+  border-color: #16a34a;
+}
+
+/* Syntax highlighting */
+.syn-keyword { color: #93c5fd; }
+.syn-name { color: #fbbf24; }
+.syn-time { color: #6ee7b7; }
+.syn-cmd { color: #f9a8d4; }
+.syn-attr { color: #c4b5fd; }
+.syn-val { color: #fca5a5; }
+.syn-perl { color: #fdba74; }
+.syn-paren { color: #94a3b8; }
+.syn-cond { color: #6ee7b7; }
+
+/* IF / DOIF condition builder */
+.condition-row {
+  background: var(--bg);
+  border-radius: var(--radius);
+  padding: 0.75rem;
+  margin-bottom: 0.5rem;
+  position: relative;
+}
+
+.condition-connector {
+  text-align: center;
+  padding: 0.25rem 0;
+}
+
+.condition-connector select {
+  width: auto;
+  display: inline-block;
+  padding: 0.25rem 0.5rem;
+  font-size: 0.8rem;
+}
+
+/* DOIF blocks */
+.doif-block {
+  background: var(--bg);
+  border-radius: var(--radius);
+  padding: 0.75rem;
+  margin-bottom: 0.75rem;
+  border-left: 3px solid var(--primary);
+}
+
+.doif-block-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+
+.doif-block-type {
+  font-weight: 600;
+  font-size: 0.9rem;
+  color: var(--primary);
+}
+
+/* Helper insert buttons */
+.condition-helpers {
+  display: flex;
+  gap: 0.35rem;
+  flex-wrap: wrap;
+  margin-top: 0.35rem;
+}
+
+.btn-helper {
+  background: var(--primary-light);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  color: var(--primary);
+  cursor: pointer;
+  padding: 0.2rem 0.5rem;
+  font-size: 0.75rem;
+  font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+  transition: all 0.15s;
+}
+
+.btn-helper:hover {
+  background: var(--primary);
+  color: white;
+  border-color: var(--primary);
+}
+
+/* Server connection bar */
+.server-bar {
+  display: flex;
+  gap: 0.5rem;
+  align-items: end;
+  flex-wrap: wrap;
+  margin-bottom: 0.35rem;
+}
+
+.server-bar > div { flex: 1; min-width: 120px; }
+.server-bar > div:first-child { flex: 2; min-width: 200px; }
+.server-bar label { font-size: 0.78rem; color: var(--text-muted); }
+
+.btn-connect {
+  padding: 0.5rem 1rem;
+  border: none;
+  border-radius: var(--radius);
+  background: var(--primary);
+  color: #fff;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+  transition: background 0.15s;
+  white-space: nowrap;
+}
+
+.btn-connect:hover { background: var(--primary-hover); }
+.btn-connect.connected { background: #16a34a; }
+.btn-connect.connected:hover { background: #15803d; }
+
+.connection-status {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  margin-bottom: 1rem;
+  min-height: 1.2em;
+}
+
+.connection-status.error { color: var(--danger); }
+.connection-status.ok { color: #16a34a; }
+
+.btn-send {
+  position: absolute;
+  top: 0.5rem;
+  right: 5rem;
+  background: rgba(22,163,74,0.2);
+  border: 1px solid rgba(22,163,74,0.4);
+  color: #6ee7b7;
+  border-radius: var(--radius);
+  padding: 0.3rem 0.7rem;
+  font-size: 0.78rem;
+  cursor: pointer;
+  transition: all 0.15s;
+  font-family: inherit;
+}
+
+.btn-send:hover:not(:disabled) { background: rgba(22,163,74,0.4); }
+.btn-send:disabled { opacity: 0.35; cursor: not-allowed; }
+.btn-send.sent { background: #16a34a; border-color: #16a34a; color: #fff; }
+.btn-send.error { background: #dc2626; border-color: #dc2626; color: #fff; }
+
+/* Responsive */
+@media (max-width: 600px) {
+  body { padding: 0.5rem; }
+  .card { padding: 1rem; }
+  .inline-fields { flex-direction: column; }
+  .tab-group { gap: 0.35rem; }
+  .tab-group label { padding: 0.35rem 0.65rem; font-size: 0.8rem; }
+  .main-tab { padding: 0.5rem 0.85rem; font-size: 0.85rem; }
+}
+</style>
+</head>
+<body>
+
+<div class="container">
+  <h1 id="pageTitle">FHEM <code>at</code> Command Assistant</h1>
+  <p class="subtitle" id="pageSubtitle">Build correct <code>at</code> definitions with a guided form</p>
+
+  <!-- Server Connection -->
+  <div class="card" style="padding:0.75rem 1rem">
+    <div class="server-bar">
+      <div>
+        <label for="fhemUrl">FHEM Server URL</label>
+        <input type="text" id="fhemUrl" placeholder="http://dietpisvr:8083" spellcheck="false">
+      </div>
+      <div>
+        <label for="fhemUser">Username</label>
+        <input type="text" id="fhemUser" placeholder="user" spellcheck="false" autocomplete="username">
+      </div>
+      <div>
+        <label for="fhemPass">Password</label>
+        <input type="text" id="fhemPass" placeholder="pass" spellcheck="false" autocomplete="current-password" style="-webkit-text-security:disc">
+      </div>
+      <button class="btn-connect" id="btnConnect">Connect</button>
+    </div>
+    <div class="connection-status" id="connectionStatus"></div>
+  </div>
+  <datalist id="fhemDevices"></datalist>
+  <datalist id="fhemReadings"></datalist>
+
+  <!-- Main Tab Navigation -->
+  <div class="main-tabs">
+    <button class="main-tab active" data-tab="at">at</button>
+    <button class="main-tab" data-tab="if">IF</button>
+    <button class="main-tab" data-tab="doif">DOIF</button>
+    <button class="main-tab" data-tab="define">define</button>
+  </div>
+
+  <!-- ==================== AT TAB ==================== -->
+  <div class="tab-panel active" data-tab="at">
+
+    <!-- 1. Definition Name -->
+    <div class="card">
+      <div class="card-title">Definition Name</div>
+      <input type="text" id="defName" placeholder="e.g. morningLight" autocomplete="off" spellcheck="false">
+      <div class="error-msg" id="defNameError">Only letters, digits and underscore allowed, no spaces</div>
+      <div class="help">Device name for the <code>at</code> definition</div>
+    </div>
+
+    <!-- 2. Time Mode -->
+    <div class="card">
+      <div class="card-title">Time Mode</div>
+      <div class="tab-group" id="timeModeGroup">
+        <label><input type="radio" name="timeMode" value="fixed" checked><span>Fixed Time</span></label>
+        <label><input type="radio" name="timeMode" value="relative"><span>Relative</span></label>
+        <label><input type="radio" name="timeMode" value="sunriseset"><span>Sunrise/Sunset</span></label>
+        <label><input type="radio" name="timeMode" value="datespec"><span>Date/Time</span></label>
+        <label><input type="radio" name="timeMode" value="ultimo"><span>at_ultimo</span></label>
+        <label><input type="radio" name="timeMode" value="perl"><span>Custom Perl</span></label>
+      </div>
+
+      <!-- Fixed Time -->
+      <div class="sub-options" id="opt-fixed">
+        <div class="inline-fields">
+          <div>
+            <label for="fixedTime">Time (HH:MM or HH:MM:SS)</label>
+            <input type="text" id="fixedTime" placeholder="06:30:00" maxlength="8">
+          </div>
+        </div>
+      </div>
+
+      <!-- Relative Time -->
+      <div class="sub-options hidden" id="opt-relative">
+        <div class="inline-fields">
+          <div>
+            <label for="relativeTime">Offset (HH:MM:SS)</label>
+            <input type="text" id="relativeTime" placeholder="00:05:00" maxlength="8">
+          </div>
+        </div>
+        <div class="help">Time offset from now. The <code>+</code> prefix is added automatically.</div>
+      </div>
+
+      <!-- Sunrise/Sunset -->
+      <div class="sub-options hidden" id="opt-sunriseset">
+        <div class="radio-group" style="margin-bottom:0.75rem">
+          <label><input type="radio" name="sunType" value="sunrise" checked> sunrise</label>
+          <label><input type="radio" name="sunType" value="sunset"> sunset</label>
+        </div>
+        <div class="inline-fields">
+          <div>
+            <label for="sunOffset">Offset (seconds)</label>
+            <input type="text" id="sunOffset" placeholder="0">
+            <div class="help">Negative = before, positive = after</div>
+          </div>
+          <div>
+            <label for="sunMin">Min time</label>
+            <input type="text" id="sunMin" placeholder="e.g. 06:00">
+            <div class="help">Earliest allowed time</div>
+          </div>
+          <div>
+            <label for="sunMax">Max time</label>
+            <input type="text" id="sunMax" placeholder="e.g. 22:00">
+            <div class="help">Latest allowed time</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Date/Time -->
+      <div class="sub-options hidden" id="opt-datespec">
+        <div class="radio-group" style="margin-bottom:0.75rem">
+          <label><input type="radio" name="dateType" value="iso" checked> ISO 8601</label>
+          <label><input type="radio" name="dateType" value="unix"> Unix timestamp</label>
+        </div>
+        <div id="dateIsoWrap">
+          <label for="dateIso">Date and time</label>
+          <input type="text" id="dateIso" placeholder="2025-12-31T23:59:00">
+        </div>
+        <div id="dateUnixWrap" class="hidden" style="display:none">
+          <label for="dateUnix">Unix timestamp</label>
+          <input type="text" id="dateUnix" placeholder="1735689540">
+        </div>
+        <div class="help">One-time execution at a specific date. Repeat modifiers are not available for date/time mode.</div>
+      </div>
+
+      <!-- at_ultimo -->
+      <div class="sub-options hidden" id="opt-ultimo">
+        <div class="inline-fields">
+          <div>
+            <label for="ultimoHour">Hour</label>
+            <input type="text" id="ultimoHour" placeholder="23" maxlength="2">
+          </div>
+          <div>
+            <label for="ultimoMin">Minute</label>
+            <input type="text" id="ultimoMin" placeholder="59" maxlength="2">
+          </div>
+          <div>
+            <label for="ultimoSec">Second</label>
+            <input type="text" id="ultimoSec" placeholder="00" maxlength="2">
+          </div>
+        </div>
+        <div class="help">Triggers on the last day of each month. Uses <code>at_ultimo()</code> function.</div>
+      </div>
+
+      <!-- Custom Perl -->
+      <div class="sub-options hidden" id="opt-perl">
+        <label for="perlExpr">Perl expression</label>
+        <input type="text" id="perlExpr" placeholder='{sunrise_abs("REAL",0,"05:00","08:00")}' spellcheck="false">
+        <div class="help">Wrapped in <code>{ }</code> automatically if not already</div>
+      </div>
+    </div>
+
+    <!-- 3. Repeat Options -->
+    <div class="card" id="repeatCard">
+      <div class="card-title">Repeat Options</div>
+      <div class="radio-group">
+        <label><input type="radio" name="repeat" value="once" checked> Once</label>
+        <label><input type="radio" name="repeat" value="repeat"> Repeating <code>*</code></label>
+        <label><input type="radio" name="repeat" value="repeatN"> N times <code>*{N}</code></label>
+      </div>
+      <div class="sub-options hidden" id="opt-repeatN">
+        <label for="repeatCount">Number of repetitions</label>
+        <input type="number" id="repeatCount" value="3" min="1" max="9999" style="width:120px">
+      </div>
+      <div class="help" id="repeatHelp"></div>
+    </div>
+
+    <!-- 4. Weekday Filter -->
+    <div class="card">
+      <button class="collapsible-toggle" id="weekdayToggle">
+        <span class="arrow">&#9654;</span> Weekday Filter <span class="badge" style="display:none" id="weekdayBadge">active</span>
+      </button>
+      <div class="collapsible-content" id="weekdayContent">
+        <div class="checkbox-group" style="margin-bottom:0.75rem">
+          <label><input type="checkbox" class="wday" value="1"> Mon</label>
+          <label><input type="checkbox" class="wday" value="2"> Tue</label>
+          <label><input type="checkbox" class="wday" value="3"> Wed</label>
+          <label><input type="checkbox" class="wday" value="4"> Thu</label>
+          <label><input type="checkbox" class="wday" value="5"> Fri</label>
+          <label><input type="checkbox" class="wday" value="6"> Sat</label>
+          <label><input type="checkbox" class="wday" value="0"> Sun</label>
+        </div>
+        <div style="display:flex;gap:0.5rem;flex-wrap:wrap">
+          <button class="btn-add" id="btnWeekdays">Weekdays</button>
+          <button class="btn-add" id="btnWeekend">Weekend</button>
+          <button class="btn-add" id="btnClearDays">Clear</button>
+        </div>
+        <div class="help" style="margin-top:0.5rem">Commands will be wrapped in a Perl block with a weekday condition.</div>
+      </div>
+    </div>
+
+    <!-- 5. Commands -->
+    <div class="card">
+      <div class="card-title">Command(s)</div>
+      <div id="commandList">
+        <div class="command-entry">
+          <span class="cmd-number">1.</span>
+          <input type="text" class="cmd-input" placeholder="e.g. set lamp on" spellcheck="false">
+        </div>
+      </div>
+      <button class="btn-add" id="btnAddCmd" style="margin-top:0.5rem">+ Add command</button>
+      <div class="help" style="margin-top:0.5rem">Multiple commands are joined with <code>;;</code></div>
+    </div>
+
+    <!-- 6. Attributes -->
+    <div class="card">
+      <button class="collapsible-toggle" id="attrToggle">
+        <span class="arrow">&#9654;</span> Attributes <span class="badge" style="display:none" id="attrBadge">active</span>
+      </button>
+      <div class="collapsible-content" id="attrContent">
+        <div style="margin-bottom:0.75rem">
+          <label for="attrAlignTime">alignTime</label>
+          <input type="text" id="attrAlignTime" placeholder="e.g. 00:00">
+          <div class="help">Align repeating timer to this time</div>
+        </div>
+        <div class="checkbox-group">
+          <label><input type="checkbox" id="attrSkipNext"> skip_next</label>
+          <label><input type="checkbox" id="attrDisable"> disable</label>
+          <label><input type="checkbox" id="attrComputeAfterInit"> computeAfterInit</label>
+        </div>
+      </div>
+    </div>
+
+    <!-- 7. Live Preview -->
+    <div class="card">
+      <div class="card-title">Live Preview</div>
+      <div class="preview-box" id="atPreview">
+        <button class="btn-copy" data-preview="atPreview">Copy</button>
+        <span class="placeholder">Fill in the form above...</span>
+      </div>
+    </div>
+
+  </div><!-- /at tab -->
+
+  <!-- ==================== IF TAB ==================== -->
+  <div class="tab-panel" data-tab="if">
+
+    <!-- Condition Builder -->
+    <div class="card">
+      <div class="card-title">Condition Builder</div>
+      <div id="ifConditions"></div>
+      <button class="btn-add" id="btnAddIfCond" style="margin-top:0.5rem">+ Add condition</button>
+      <div class="help" style="margin-top:0.5rem">Predefined variables: <code>$we</code> (weekend), <code>$wday</code> (0-6), <code>$hour</code>, <code>$min</code>, <code>$hms</code></div>
+    </div>
+
+    <!-- IF Commands -->
+    <div class="card">
+      <div class="card-title">IF Commands (then)</div>
+      <div id="ifCommands">
+        <div class="command-entry">
+          <span class="cmd-number">1.</span>
+          <input type="text" class="if-cmd-input" placeholder="e.g. set switch1 on" spellcheck="false">
+        </div>
+      </div>
+      <button class="btn-add" id="btnAddIfCmd" style="margin-top:0.5rem">+ Add command</button>
+      <div class="help" style="margin-top:0.5rem">Multiple commands are joined with <code>,</code> (FHEM IF syntax)</div>
+    </div>
+
+    <!-- ELSE Commands -->
+    <div class="card">
+      <button class="collapsible-toggle" id="ifElseToggle">
+        <span class="arrow">&#9654;</span> ELSE Commands <span class="badge" style="display:none" id="ifElseBadge">active</span>
+      </button>
+      <div class="collapsible-content" id="ifElseContent">
+        <div id="ifElseCommands">
+          <div class="command-entry">
+            <span class="cmd-number">1.</span>
+            <input type="text" class="if-else-cmd-input" placeholder="e.g. set switch1 off" spellcheck="false">
+          </div>
+        </div>
+        <button class="btn-add" id="btnAddIfElseCmd" style="margin-top:0.5rem">+ Add command</button>
+        <div class="help" style="margin-top:0.5rem">Multiple commands are joined with <code>,</code></div>
+      </div>
+    </div>
+
+    <!-- Live Preview -->
+    <div class="card">
+      <div class="card-title">Live Preview</div>
+      <div class="preview-box" id="ifPreview">
+        <button class="btn-copy" data-preview="ifPreview">Copy</button>
+        <span class="placeholder">Build a condition above...</span>
+      </div>
+    </div>
+
+  </div><!-- /if tab -->
+
+  <!-- ==================== DOIF TAB ==================== -->
+  <div class="tab-panel" data-tab="doif">
+
+    <!-- Definition Name -->
+    <div class="card">
+      <div class="card-title">Definition Name</div>
+      <input type="text" id="doifName" placeholder="e.g. di_heating" autocomplete="off" spellcheck="false">
+      <div class="error-msg" id="doifNameError">Only letters, digits and underscore allowed, no spaces</div>
+      <div class="help">Device name for the <code>DOIF</code> definition</div>
+    </div>
+
+    <!-- Mode Selection + Content -->
+    <div class="card">
+      <div class="card-title">Mode</div>
+      <div class="tab-group" id="doifModeGroup">
+        <label><input type="radio" name="doifMode" value="fhem" checked><span>FHEM Mode</span></label>
+        <label><input type="radio" name="doifMode" value="perl"><span>Perl Mode</span></label>
+      </div>
+
+      <!-- FHEM Mode -->
+      <div id="doifFhemMode">
+        <div id="doifBlocks"></div>
+        <div style="display:flex;gap:0.5rem;flex-wrap:wrap;margin-top:0.5rem">
+          <button class="btn-add" id="btnAddDoelseif">+ DOELSEIF</button>
+          <button class="btn-add" id="btnAddDoelse">+ DOELSE</button>
+        </div>
+      </div>
+
+      <!-- Perl Mode -->
+      <div id="doifPerlMode" style="display:none">
+        <div style="margin-bottom:0.75rem">
+          <label for="doifPerlBlock">Block name (optional)</label>
+          <input type="text" id="doifPerlBlock" placeholder="e.g. heating" spellcheck="false">
+        </div>
+        <label for="doifPerlCode">Perl Code</label>
+        <textarea id="doifPerlCode" rows="8" spellcheck="false" placeholder='{ fhem_set("heater on") if ([sensor:temperature] < 18) }'></textarea>
+        <div class="help" style="margin-top:0.35rem">Available syntax: <code>[device:reading]</code>, <code>[HH:MM]</code>, <code>fhem_set()</code>, <code>fhem()</code>, <code>set_Reading()</code></div>
+      </div>
+    </div>
+
+    <!-- Attributes -->
+    <div class="card">
+      <button class="collapsible-toggle" id="doifAttrToggle">
+        <span class="arrow">&#9654;</span> Attributes <span class="badge" style="display:none" id="doifAttrBadge">active</span>
+      </button>
+      <div class="collapsible-content" id="doifAttrContent">
+        <div class="inline-fields" style="margin-bottom:0.75rem">
+          <div>
+            <label for="doifAttrDo">do</label>
+            <select id="doifAttrDo">
+              <option value="">(none)</option>
+              <option value="always">always</option>
+              <option value="resetwait">resetwait</option>
+            </select>
+            <div class="help">Execute even if state unchanged</div>
+          </div>
+          <div>
+            <label for="doifAttrWait">wait</label>
+            <input type="text" id="doifAttrWait" placeholder="e.g. 00:05 or 300" spellcheck="false">
+            <div class="help">Delay before command execution</div>
+          </div>
+        </div>
+        <div class="inline-fields" style="margin-bottom:0.75rem">
+          <div>
+            <label for="doifAttrCmdpause">cmdpause</label>
+            <input type="text" id="doifAttrCmdpause" placeholder="e.g. 00:30" spellcheck="false">
+            <div class="help">Min time between commands</div>
+          </div>
+          <div>
+            <label for="doifAttrRepeatcmd">repeatcmd</label>
+            <input type="text" id="doifAttrRepeatcmd" placeholder="e.g. 300" spellcheck="false">
+            <div class="help">Repeat command interval</div>
+          </div>
+        </div>
+        <div class="inline-fields" style="margin-bottom:0.75rem">
+          <div>
+            <label for="doifAttrCmdState">cmdState</label>
+            <input type="text" id="doifAttrCmdState" placeholder="e.g. on|off" spellcheck="false">
+            <div class="help">Custom state per branch</div>
+          </div>
+          <div>
+            <label for="doifAttrInitialize">initialize</label>
+            <input type="text" id="doifAttrInitialize" placeholder="e.g. cmd_1" spellcheck="false">
+            <div class="help">Initial state on FHEM start</div>
+          </div>
+        </div>
+        <div style="margin-bottom:0.75rem">
+          <label for="doifAttrStartup">startup</label>
+          <input type="text" id="doifAttrStartup" placeholder="e.g. set device on" spellcheck="false">
+          <div class="help">Command to run on FHEM startup</div>
+        </div>
+        <div class="checkbox-group">
+          <label><input type="checkbox" id="doifAttrTimerWithWait"> timerWithWait</label>
+          <label><input type="checkbox" id="doifAttrDisable"> disable</label>
+        </div>
+      </div>
+    </div>
+
+    <!-- Live Preview -->
+    <div class="card">
+      <div class="card-title">Live Preview</div>
+      <div class="preview-box" id="doifPreview">
+        <button class="btn-copy" data-preview="doifPreview">Copy</button>
+        <span class="placeholder">Fill in the form above...</span>
+      </div>
+    </div>
+
+  </div><!-- /doif tab -->
+
+  <!-- ==================== DEFINE TAB ==================== -->
+  <div class="tab-panel" data-tab="define">
+
+    <!-- 1. define / defmod Toggle -->
+    <div class="card">
+      <div class="card-title">Command Type</div>
+      <div class="tab-group" id="defineModGroup">
+        <label><input type="radio" name="defineMod" value="define" checked><span>define</span></label>
+        <label><input type="radio" name="defineMod" value="defmod"><span>defmod</span></label>
+      </div>
+      <div class="help"><code>defmod</code> creates or updates an existing definition without errors if it already exists</div>
+    </div>
+
+    <!-- 2. Definition Name -->
+    <div class="card">
+      <div class="card-title">Definition Name</div>
+      <input type="text" id="defineDefName" placeholder="e.g. myDevice" autocomplete="off" spellcheck="false">
+      <div class="error-msg" id="defineDefNameError">Only letters, digits and underscore allowed, no spaces</div>
+      <div class="help">Device name for the definition</div>
+    </div>
+
+    <!-- 3. Device Type -->
+    <div class="card">
+      <div class="card-title">Device Type</div>
+      <select id="defineDeviceType">
+        <option value="custom">(custom)</option>
+        <option value="dummy">dummy</option>
+        <option value="notify">notify</option>
+        <option value="watchdog">watchdog</option>
+        <option value="FileLog">FileLog</option>
+        <option value="readingsProxy">readingsProxy</option>
+        <option value="structure">structure</option>
+        <option value="MQTT2_DEVICE">MQTT2_DEVICE</option>
+        <option value="Tasmota">Tasmota</option>
+      </select>
+    </div>
+
+    <!-- 4. Type-Specific Fields -->
+    <div class="card" id="defineTypeFieldsCard" style="display:none">
+      <div class="card-title" id="defineTypeFieldsTitle">Type Parameters</div>
+      <div id="defineTypeFields"></div>
+    </div>
+
+    <!-- 5. Common Attributes -->
+    <div class="card">
+      <button class="collapsible-toggle" id="defineAttrToggle">
+        <span class="arrow">&#9654;</span> Attributes <span class="badge" style="display:none" id="defineAttrBadge">active</span>
+      </button>
+      <div class="collapsible-content" id="defineAttrContent">
+        <div class="inline-fields" style="margin-bottom:0.75rem">
+          <div>
+            <label for="defineAttrRoom">room</label>
+            <input type="text" id="defineAttrRoom" placeholder="e.g. Living" spellcheck="false">
+          </div>
+          <div>
+            <label for="defineAttrGroup">group</label>
+            <input type="text" id="defineAttrGroup" placeholder="e.g. Lights" spellcheck="false">
+          </div>
+        </div>
+        <div style="margin-bottom:0.75rem">
+          <label for="defineAttrAlias">alias</label>
+          <input type="text" id="defineAttrAlias" placeholder="e.g. Living Room Lamp" spellcheck="false">
+        </div>
+        <div style="margin-bottom:0.75rem">
+          <label for="defineAttrComment">comment</label>
+          <input type="text" id="defineAttrComment" placeholder="e.g. Main ceiling light" spellcheck="false">
+        </div>
+        <div class="checkbox-group" id="defineAttrCheckboxes">
+          <label><input type="checkbox" id="defineAttrDisable"> disable</label>
+        </div>
+        <!-- Extra MQTT2_DEVICE attributes (hidden by default) -->
+        <div id="defineMqttAttrs" style="display:none">
+          <hr style="margin:0.75rem 0;border-color:var(--border)">
+          <div style="margin-bottom:0.75rem">
+            <label for="defineAttrIODev">IODev</label>
+            <input type="text" id="defineAttrIODev" placeholder="e.g. MQTT2_Server" spellcheck="false">
+          </div>
+          <div style="margin-bottom:0.75rem">
+            <label for="defineAttrReadingList">readingList</label>
+            <textarea id="defineAttrReadingList" rows="3" placeholder="e.g. topic1:reading1 topic2:reading2" spellcheck="false"></textarea>
+          </div>
+          <div style="margin-bottom:0.75rem">
+            <label for="defineAttrSetList">setList</label>
+            <textarea id="defineAttrSetList" rows="3" placeholder="e.g. on:noArg off:noArg" spellcheck="false"></textarea>
+          </div>
+        </div>
+        <!-- Extra notify attribute (hidden by default) -->
+        <div id="defineNotifyAttrs" style="display:none">
+          <hr style="margin:0.75rem 0;border-color:var(--border)">
+          <div style="margin-bottom:0.75rem">
+            <label for="defineAttrDisabledForIntervals">disabledForIntervals</label>
+            <input type="text" id="defineAttrDisabledForIntervals" placeholder="e.g. 22:00-06:00" spellcheck="false">
+            <div class="help">Time intervals where the notify is disabled</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 6. Live Preview -->
+    <div class="card">
+      <div class="card-title">Live Preview</div>
+      <div class="preview-box" id="definePreview">
+        <button class="btn-copy" data-preview="definePreview">Copy</button>
+        <span class="placeholder">Fill in the form above...</span>
+      </div>
+    </div>
+
+  </div><!-- /define tab -->
+
+</div>
+
+<script>
+(function() {
+  "use strict";
+
+  // ============================================================
+  // SHARED UTILITIES
+  // ============================================================
+
+  function escapeHtml(s) {
+    return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  }
+
+  function setupCollapsible(toggle, content) {
+    toggle.addEventListener("click", () => {
+      toggle.classList.toggle("open");
+      content.classList.toggle("open");
+    });
+  }
+
+  function copyToClipboard(text, btn) {
+    if (!text) return;
+    navigator.clipboard.writeText(text).then(() => {
+      btn.textContent = "Copied!";
+      btn.classList.add("copied");
+      setTimeout(() => { btn.textContent = "Copy"; btn.classList.remove("copied"); }, 1500);
+    });
+  }
+
+  function validateName(input, errorEl) {
+    const val = input.value;
+    const valid = val === "" || /^[A-Za-z0-9_]+$/.test(val);
+    input.classList.toggle("invalid", !valid);
+    errorEl.classList.toggle("visible", !valid);
+    return valid;
+  }
+
+  function addCommandRow(container, inputClass, placeholder) {
+    const count = container.children.length + 1;
+    const div = document.createElement("div");
+    div.className = "command-entry";
+    div.innerHTML =
+      '<span class="cmd-number">' + count + '.</span>' +
+      '<input type="text" class="' + inputClass + '" placeholder="' + placeholder + '" spellcheck="false">' +
+      '<button class="btn-remove" title="Remove">&times;</button>';
+    div.querySelector(".btn-remove").addEventListener("click", () => {
+      div.remove();
+      renumberContainer(container);
+    });
+    container.appendChild(div);
+    div.querySelector("input").focus();
+  }
+
+  function renumberContainer(container) {
+    container.querySelectorAll(".command-entry").forEach((entry, i) => {
+      entry.querySelector(".cmd-number").textContent = (i + 1) + ".";
+    });
+  }
+
+  function getCommandValues(container, inputClass) {
+    const cmds = [];
+    container.querySelectorAll("." + inputClass).forEach(inp => {
+      const v = inp.value.trim();
+      if (v) cmds.push(v);
+    });
+    return cmds;
+  }
+
+  // ============================================================
+  // FHEM SERVER CONNECTION
+  // ============================================================
+
+  const fhem = { connected: false, csrfToken: "", serverUrl: "", authHeader: "", devices: {} };
+
+  const btnConnect = document.getElementById("btnConnect");
+  const connectionStatus = document.getElementById("connectionStatus");
+  const fhemDevicesList = document.getElementById("fhemDevices");
+  const fhemReadingsList = document.getElementById("fhemReadings");
+
+  btnConnect.addEventListener("click", connectToFhem);
+
+  async function connectToFhem() {
+    const url = document.getElementById("fhemUrl").value.trim().replace(/\/+$/, "");
+    const user = document.getElementById("fhemUser").value;
+    const pass = document.getElementById("fhemPass").value;
+
+    if (!url) { setStatus("Enter a server URL", "error"); return; }
+
+    fhem.serverUrl = url;
+    fhem.authHeader = user ? "Basic " + btoa(user + ":" + pass) : "";
+
+    btnConnect.textContent = "Connecting...";
+    btnConnect.disabled = true;
+    setStatus("Connecting...", "");
+
+    try {
+      // Step 1: Get CSRF token
+      const headers = {};
+      if (fhem.authHeader) headers["Authorization"] = fhem.authHeader;
+
+      const csrfResp = await fetch(url + "/fhem", { headers });
+      if (!csrfResp.ok) throw new Error("HTTP " + csrfResp.status + " — check URL/credentials");
+
+      fhem.csrfToken = csrfResp.headers.get("X-FHEM-csrfToken") || "";
+
+      // Step 2: Get device list
+      let devUrl = url + "/fhem?cmd=jsonlist2&XHR=1";
+      if (fhem.csrfToken) devUrl += "&fwcsrf=" + encodeURIComponent(fhem.csrfToken);
+
+      const devResp = await fetch(devUrl, { headers });
+      if (!devResp.ok) throw new Error("Failed to fetch devices: HTTP " + devResp.status);
+
+      const json = await devResp.json();
+      fhem.devices = {};
+      (json.Results || []).forEach(dev => {
+        const name = dev.Name;
+        const readings = dev.Readings ? Object.keys(dev.Readings) : [];
+        fhem.devices[name] = readings;
+      });
+
+      // Step 3: Populate device datalist
+      fhemDevicesList.innerHTML = "";
+      Object.keys(fhem.devices).sort().forEach(name => {
+        const opt = document.createElement("option");
+        opt.value = name;
+        fhemDevicesList.appendChild(opt);
+      });
+
+      fhem.connected = true;
+      const count = Object.keys(fhem.devices).length;
+      setStatus("Connected (" + count + " devices)", "ok");
+      btnConnect.textContent = "Reconnect";
+      btnConnect.classList.add("connected");
+      document.querySelectorAll(".btn-send").forEach(b => b.disabled = false);
+    } catch (e) {
+      fhem.connected = false;
+      const isCors = e instanceof TypeError && (e.message.includes("NetworkError") || e.message.includes("Failed to fetch") || e.message.includes("Load failed"));
+      if (isCors) {
+        setStatus('CORS blocked — run this in FHEM: attr WEB CORS 1  (replace "WEB" with your FHEMWEB device name, then retry)', "error");
+      } else {
+        setStatus("Error: " + e.message, "error");
+      }
+      btnConnect.textContent = "Connect";
+      btnConnect.classList.remove("connected");
+      document.querySelectorAll(".btn-send").forEach(b => b.disabled = true);
+    } finally {
+      btnConnect.disabled = false;
+    }
+  }
+
+  function setStatus(msg, cls) {
+    connectionStatus.textContent = msg;
+    connectionStatus.className = "connection-status" + (cls ? " " + cls : "");
+  }
+
+  function updateReadingsDatalist(deviceName) {
+    fhemReadingsList.innerHTML = "";
+    const readings = fhem.devices[deviceName];
+    if (!readings) return;
+    readings.sort().forEach(r => {
+      const opt = document.createElement("option");
+      opt.value = r;
+      fhemReadingsList.appendChild(opt);
+    });
+  }
+
+  // When a reading input receives focus, update datalist based on sibling device input
+  document.addEventListener("focusin", (e) => {
+    const inp = e.target;
+    if (!inp.matches || !inp.matches('input[list="fhemReadings"]')) return;
+    const row = inp.closest(".inline-fields, .condition-row, .doif-block");
+    if (!row) return;
+    const deviceInput = row.querySelector('input[list="fhemDevices"]');
+    if (deviceInput) updateReadingsDatalist(deviceInput.value.trim());
+  });
+
+  async function sendToFhem(rawText, sendBtn) {
+    if (!fhem.connected || !rawText) return;
+
+    const lines = rawText.split("\n").filter(l => l.trim() && !l.includes("<"));
+    if (lines.length === 0) {
+      sendBtn.textContent = "Nothing to send";
+      setTimeout(() => { sendBtn.textContent = "Send"; }, 1500);
+      return;
+    }
+
+    sendBtn.textContent = "Sending...";
+    sendBtn.disabled = true;
+    const headers = {};
+    if (fhem.authHeader) headers["Authorization"] = fhem.authHeader;
+
+    let allOk = true;
+    for (const line of lines) {
+      try {
+        let cmdUrl = fhem.serverUrl + "/fhem?cmd=" + encodeURIComponent(line) + "&XHR=1";
+        if (fhem.csrfToken) cmdUrl += "&fwcsrf=" + encodeURIComponent(fhem.csrfToken);
+        const resp = await fetch(cmdUrl, { headers });
+        if (!resp.ok) allOk = false;
+      } catch (e) {
+        allOk = false;
+      }
+    }
+
+    if (allOk) {
+      sendBtn.textContent = "Sent!";
+      sendBtn.classList.add("sent");
+    } else {
+      sendBtn.textContent = "Error!";
+      sendBtn.classList.add("error");
+    }
+    sendBtn.disabled = false;
+    setTimeout(() => {
+      sendBtn.textContent = "Send";
+      sendBtn.classList.remove("sent", "error");
+    }, 2000);
+  }
+
+  function makeSendButton(previewId, getRawFn) {
+    const disabled = fhem.connected ? "" : " disabled";
+    return '<button class="btn-send" data-preview="' + previewId + '"' + disabled + '>Send</button>';
+  }
+
+  function bindSendButton(previewEl, getRawFn) {
+    const btn = previewEl.querySelector(".btn-send");
+    if (btn) {
+      btn.addEventListener("click", () => sendToFhem(getRawFn(), btn));
+    }
+  }
+
+  // ============================================================
+  // TAB SWITCHING
+  // ============================================================
+
+  const mainTabs = document.querySelectorAll(".main-tab");
+  const tabPanels = document.querySelectorAll(".tab-panel");
+  const pageTitle = document.getElementById("pageTitle");
+  const pageSubtitle = document.getElementById("pageSubtitle");
+
+  const tabInfo = {
+    at:   { title: 'FHEM <code>at</code> Command Assistant',   subtitle: 'Build correct <code>at</code> definitions with a guided form' },
+    if:   { title: 'FHEM <code>IF</code> Command Assistant',   subtitle: 'Build conditional <code>IF</code> commands' },
+    doif: { title: 'FHEM <code>DOIF</code> Command Assistant', subtitle: 'Build event-driven <code>DOIF</code> automations' },
+    define: { title: 'FHEM <code>define</code> Command Assistant', subtitle: 'Create device definitions with <code>define</code> / <code>defmod</code>' }
+  };
+
+  mainTabs.forEach(tab => {
+    tab.addEventListener("click", () => {
+      const target = tab.dataset.tab;
+      mainTabs.forEach(t => t.classList.toggle("active", t === tab));
+      tabPanels.forEach(p => p.classList.toggle("active", p.dataset.tab === target));
+      pageTitle.innerHTML = tabInfo[target].title;
+      pageSubtitle.innerHTML = tabInfo[target].subtitle;
+    });
+  });
+
+  // ============================================================
+  // AT ASSISTANT
+  // ============================================================
+  (function initAt() {
+    const defName = document.getElementById("defName");
+    const defNameError = document.getElementById("defNameError");
+    const preview = document.getElementById("atPreview");
+    const commandList = document.getElementById("commandList");
+    const btnAddCmd = document.getElementById("btnAddCmd");
+    const repeatHelp = document.getElementById("repeatHelp");
+    const weekdayToggle = document.getElementById("weekdayToggle");
+    const weekdayContent = document.getElementById("weekdayContent");
+    const weekdayBadge = document.getElementById("weekdayBadge");
+    const attrToggle = document.getElementById("attrToggle");
+    const attrContent = document.getElementById("attrContent");
+    const attrBadge = document.getElementById("attrBadge");
+
+    setupCollapsible(weekdayToggle, weekdayContent);
+    setupCollapsible(attrToggle, attrContent);
+
+    // Quick weekday buttons
+    document.getElementById("btnWeekdays").addEventListener("click", () => {
+      document.querySelectorAll(".wday").forEach(cb => { cb.checked = [1,2,3,4,5].includes(+cb.value); });
+      update();
+    });
+    document.getElementById("btnWeekend").addEventListener("click", () => {
+      document.querySelectorAll(".wday").forEach(cb => { cb.checked = [0,6].includes(+cb.value); });
+      update();
+    });
+    document.getElementById("btnClearDays").addEventListener("click", () => {
+      document.querySelectorAll(".wday").forEach(cb => { cb.checked = false; });
+      update();
+    });
+
+    // Time mode switching
+    function getTimeMode() {
+      return document.querySelector('input[name="timeMode"]:checked').value;
+    }
+
+    function showTimeOptions() {
+      const mode = getTimeMode();
+      ["fixed","relative","sunriseset","datespec","ultimo","perl"].forEach(m => {
+        const el = document.getElementById("opt-" + m);
+        if (m === mode) { el.classList.remove("hidden"); el.style.display = ""; }
+        else { el.classList.add("hidden"); el.style.display = "none"; }
+      });
+      const isDate = mode === "datespec";
+      document.querySelectorAll('input[name="repeat"]').forEach(r => {
+        r.disabled = isDate;
+        r.closest("label").style.opacity = isDate ? "0.4" : "1";
+      });
+      if (isDate) {
+        document.querySelector('input[name="repeat"][value="once"]').checked = true;
+        document.getElementById("opt-repeatN").classList.add("hidden");
+        document.getElementById("opt-repeatN").style.display = "none";
+        repeatHelp.textContent = "Repeat options are not available for date/time mode.";
+      } else {
+        repeatHelp.textContent = "";
+      }
+    }
+
+    document.querySelectorAll('input[name="timeMode"]').forEach(r => r.addEventListener("change", () => { showTimeOptions(); update(); }));
+
+    // Date type switching
+    document.querySelectorAll('input[name="dateType"]').forEach(r => r.addEventListener("change", () => {
+      const iso = document.querySelector('input[name="dateType"][value="iso"]').checked;
+      document.getElementById("dateIsoWrap").style.display = iso ? "" : "none";
+      document.getElementById("dateUnixWrap").style.display = iso ? "none" : "";
+      update();
+    }));
+
+    // Repeat switching
+    document.querySelectorAll('input[name="repeat"]').forEach(r => r.addEventListener("change", () => {
+      const val = document.querySelector('input[name="repeat"]:checked').value;
+      const nOpt = document.getElementById("opt-repeatN");
+      if (val === "repeatN") { nOpt.classList.remove("hidden"); nOpt.style.display = ""; }
+      else { nOpt.classList.add("hidden"); nOpt.style.display = "none"; }
+      update();
+    }));
+
+    // Command management
+    btnAddCmd.addEventListener("click", () => {
+      addCommandRow(commandList, "cmd-input", "e.g. set device off");
+      update();
+    });
+
+    // Name validation
+    defName.addEventListener("input", () => { validateName(defName, defNameError); update(); });
+
+    // Build timespec
+    function buildTimespec() {
+      const mode = getTimeMode();
+      switch (mode) {
+        case "fixed":
+          return normalizeTime(document.getElementById("fixedTime").value.trim());
+        case "relative":
+          return normalizeTime(document.getElementById("relativeTime").value.trim());
+        case "sunriseset": {
+          const type = document.querySelector('input[name="sunType"]:checked').value;
+          const offset = document.getElementById("sunOffset").value.trim();
+          const min = quoteIfPresent(document.getElementById("sunMin").value.trim());
+          const max = quoteIfPresent(document.getElementById("sunMax").value.trim());
+          return buildSunFunc(type, offset, min, max);
+        }
+        case "datespec": {
+          const iso = document.querySelector('input[name="dateType"][value="iso"]').checked;
+          return iso ? document.getElementById("dateIso").value.trim() : document.getElementById("dateUnix").value.trim();
+        }
+        case "ultimo": {
+          const h = pad2(document.getElementById("ultimoHour").value.trim());
+          const m = pad2(document.getElementById("ultimoMin").value.trim());
+          const s = pad2(document.getElementById("ultimoSec").value.trim());
+          return buildUltimoFunc(h, m, s);
+        }
+        case "perl": {
+          let expr = document.getElementById("perlExpr").value.trim();
+          if (expr && !expr.startsWith("{")) expr = "{" + expr + "}";
+          return expr;
+        }
+      }
+      return "";
+    }
+
+    function normalizeTime(t) {
+      if (/^\d{1,2}:\d{2}$/.test(t)) return t + ":00";
+      if (/^\d{1,2}:\d{2}:\d{2}$/.test(t)) return t;
+      return t;
+    }
+
+    function pad2(v) {
+      if (v === "") return "00";
+      return v.length === 1 ? "0" + v : v;
+    }
+
+    function quoteIfPresent(v) {
+      if (!v) return "";
+      if (!v.startsWith('"') && !v.startsWith("'")) return '"' + v + '"';
+      return v;
+    }
+
+    function buildSunFunc(type, offset, min, max) {
+      const args = [];
+      const hasOffset = offset !== "" && offset !== "0";
+      const hasMin = min !== "";
+      const hasMax = max !== "";
+      if (hasOffset || hasMin || hasMax) args.push(hasOffset ? offset : "0");
+      if (hasMin || hasMax) args.push(hasMin ? min : '""');
+      if (hasMax) args.push(max);
+      if (args.length === 0) return "{" + type + "()}";
+      return "{" + type + "(" + args.join(",") + ")}";
+    }
+
+    function buildUltimoFunc(h, m, s) {
+      return "{at_ultimo(" + h + ":" + m + ":" + s + ")}";
+    }
+
+    function buildPrefix() {
+      const mode = getTimeMode();
+      const repeat = document.querySelector('input[name="repeat"]:checked').value;
+      const isRelative = mode === "relative";
+      let prefix = "";
+      if (isRelative) prefix += "+";
+      if (repeat === "repeat") prefix += "*";
+      else if (repeat === "repeatN") {
+        const n = document.getElementById("repeatCount").value || "3";
+        prefix += "*{" + n + "}";
+      }
+      return prefix;
+    }
+
+    function getSelectedWeekdays() {
+      const selected = [];
+      document.querySelectorAll(".wday:checked").forEach(cb => selected.push(+cb.value));
+      return selected;
+    }
+
+    function buildWeekdayCondition(days) {
+      if (days.length === 0) return "";
+      const weekend = [0, 6];
+      const weekdays = [1, 2, 3, 4, 5];
+      const isWeekend = days.length === 2 && weekend.every(d => days.includes(d));
+      const isWeekdays = days.length === 5 && weekdays.every(d => days.includes(d));
+      if (isWeekend) return "$we";
+      if (isWeekdays) return "!$we";
+      if (days.length === 1) return "$wday==" + days[0];
+      return '$wday~~"' + days.join("|") + '"';
+    }
+
+    function buildCommandPart() {
+      return getCommandValues(commandList, "cmd-input");
+    }
+
+    function escapePerl(cmd) {
+      return cmd.replace(/\\/g, "\\\\").replace(/"/g, '\\"');
+    }
+
+    function buildOutput() {
+      const name = defName.value.trim();
+      const timespec = buildTimespec();
+      const prefix = buildPrefix();
+      const cmds = buildCommandPart();
+      const days = getSelectedWeekdays();
+      const condition = buildWeekdayCondition(days);
+
+      if (!name && !timespec && cmds.length === 0) return { lines: [], raw: "" };
+
+      const displayName = name || "<name>";
+      const displayTime = timespec || "<timespec>";
+
+      let commandStr = "";
+      if (cmds.length === 0) {
+        commandStr = "<command>";
+      } else if (condition) {
+        const fhemCmds = cmds.map(c => escapePerl(c)).join(";;");
+        commandStr = '{ fhem("' + fhemCmds + '") if(' + condition + ') }';
+      } else if (cmds.length === 1) {
+        commandStr = cmds[0];
+      } else {
+        commandStr = cmds.join(";;");
+      }
+
+      const defineLine = "define " + displayName + " at " + prefix + displayTime + " " + commandStr;
+      const lines = [defineLine];
+
+      const alignTime = document.getElementById("attrAlignTime").value.trim();
+      if (alignTime) lines.push("attr " + displayName + " alignTime " + alignTime);
+      if (document.getElementById("attrSkipNext").checked) lines.push("attr " + displayName + " skip_next 1");
+      if (document.getElementById("attrDisable").checked) lines.push("attr " + displayName + " disable 1");
+      if (document.getElementById("attrComputeAfterInit").checked) lines.push("attr " + displayName + " computeAfterInit 1");
+
+      return { lines, raw: lines.join("\n") };
+    }
+
+    // Syntax highlighting
+    function highlightLine(line) {
+      if (line.startsWith("define ")) return highlightDefine(line);
+      if (line.startsWith("attr ")) return highlightAttr(line);
+      return escapeHtml(line);
+    }
+
+    function highlightDefine(line) {
+      const m = line.match(/^(define\s+)(\S+)(\s+at\s+)(\S+)(\s+)([\s\S]*)$/);
+      if (!m) return escapeHtml(line);
+      return '<span class="syn-keyword">' + escapeHtml(m[1].trimEnd()) + '</span> ' +
+        '<span class="syn-name">' + escapeHtml(m[2]) + '</span>' +
+        '<span class="syn-keyword">' + escapeHtml(m[3].trimEnd()) + '</span> ' +
+        '<span class="syn-time">' + escapeHtml(m[4]) + '</span>' +
+        m[5] + highlightCommand(m[6]);
+    }
+
+    function highlightCommand(cmd) {
+      if (cmd.startsWith("{")) return '<span class="syn-perl">' + escapeHtml(cmd) + '</span>';
+      return '<span class="syn-cmd">' + escapeHtml(cmd) + '</span>';
+    }
+
+    function highlightAttr(line) {
+      const m = line.match(/^(attr\s+)(\S+)(\s+)(\S+)(\s+)([\s\S]*)$/);
+      if (!m) return escapeHtml(line);
+      return '<span class="syn-keyword">' + escapeHtml(m[1].trimEnd()) + '</span> ' +
+        '<span class="syn-name">' + escapeHtml(m[2]) + '</span>' +
+        m[3] + '<span class="syn-attr">' + escapeHtml(m[4]) + '</span>' +
+        m[5] + '<span class="syn-val">' + escapeHtml(m[6]) + '</span>';
+    }
+
+    function update() {
+      const { lines, raw } = buildOutput();
+
+      const daysActive = getSelectedWeekdays().length > 0;
+      weekdayBadge.style.display = daysActive ? "" : "none";
+
+      const attrActive = document.getElementById("attrAlignTime").value.trim() !== "" ||
+        document.getElementById("attrSkipNext").checked || document.getElementById("attrDisable").checked ||
+        document.getElementById("attrComputeAfterInit").checked;
+      attrBadge.style.display = attrActive ? "" : "none";
+
+      if (lines.length === 0) {
+        preview.innerHTML = makeSendButton("atPreview", () => buildOutput().raw) +
+          '<button class="btn-copy" data-preview="atPreview">Copy</button>' +
+          '<span class="placeholder">Fill in the form above...</span>';
+      } else {
+        const highlighted = lines.map(highlightLine).join("\n");
+        preview.innerHTML = makeSendButton("atPreview", () => buildOutput().raw) +
+          '<button class="btn-copy" data-preview="atPreview">Copy</button>' + highlighted;
+      }
+
+      preview.querySelector(".btn-copy").addEventListener("click", () => {
+        copyToClipboard(buildOutput().raw, preview.querySelector(".btn-copy"));
+      });
+      bindSendButton(preview, () => buildOutput().raw);
+    }
+
+    // Listen to inputs within the at panel
+    const atPanel = document.querySelector('.tab-panel[data-tab="at"]');
+    atPanel.addEventListener("input", update);
+    atPanel.addEventListener("change", update);
+
+    commandList.querySelector(".cmd-input").addEventListener("input", update);
+
+    showTimeOptions();
+    update();
+  })();
+
+  // ============================================================
+  // IF ASSISTANT
+  // ============================================================
+  (function initIf() {
+    const conditionsContainer = document.getElementById("ifConditions");
+    const ifCommandsContainer = document.getElementById("ifCommands");
+    const ifElseCommandsContainer = document.getElementById("ifElseCommands");
+    const preview = document.getElementById("ifPreview");
+    const elseBadge = document.getElementById("ifElseBadge");
+
+    setupCollapsible(
+      document.getElementById("ifElseToggle"),
+      document.getElementById("ifElseContent")
+    );
+
+    let condIdCounter = 0;
+
+    function createConditionRow() {
+      condIdCounter++;
+      const id = condIdCounter;
+
+      // Add AND/OR connector if not first
+      if (conditionsContainer.querySelectorAll(".condition-row").length > 0) {
+        const connector = document.createElement("div");
+        connector.className = "condition-connector";
+        connector.dataset.forCond = id;
+        connector.innerHTML = '<select class="cond-logic"><option value="and">and</option><option value="or">or</option></select>';
+        conditionsContainer.appendChild(connector);
+      }
+
+      const row = document.createElement("div");
+      row.className = "condition-row";
+      row.dataset.condId = id;
+      row.innerHTML =
+        '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.5rem">' +
+          '<label style="margin:0;font-weight:600">Condition ' + id + '</label>' +
+          (id > 1 ? '<button class="btn-remove cond-remove" title="Remove">&times;</button>' : '') +
+        '</div>' +
+        '<div class="inline-fields" style="margin-bottom:0.5rem">' +
+          '<div style="min-width:180px">' +
+            '<label>Type</label>' +
+            '<select class="if-left-type">' +
+              '<option value="state">[device] State</option>' +
+              '<option value="reading" selected>[device:reading] Reading</option>' +
+              '<option value="reading-num">[device:reading:d] Numeric</option>' +
+              '<option value="readingsval">ReadingsVal(...)</option>' +
+              '<option value="value">Value(...)</option>' +
+              '<option value="variable">Variable</option>' +
+              '<option value="custom">Custom Expression</option>' +
+            '</select>' +
+          '</div>' +
+        '</div>' +
+        '<div class="if-left-inputs inline-fields" style="margin-bottom:0.5rem"></div>' +
+        '<div class="if-comparison inline-fields"></div>';
+
+      conditionsContainer.appendChild(row);
+
+      updateConditionFields(row);
+
+      row.querySelector(".if-left-type").addEventListener("change", () => {
+        updateConditionFields(row);
+        updateIf();
+      });
+
+      const removeBtn = row.querySelector(".cond-remove");
+      if (removeBtn) {
+        removeBtn.addEventListener("click", () => {
+          const connector = conditionsContainer.querySelector('[data-for-cond="' + id + '"]');
+          if (connector) connector.remove();
+          row.remove();
+          // If we removed the first condition, remove the connector that now leads the list
+          const firstConn = conditionsContainer.querySelector(".condition-connector");
+          if (firstConn && !firstConn.previousElementSibling) firstConn.remove();
+          renumberIfConditions();
+          updateIf();
+        });
+      }
+    }
+
+    function renumberIfConditions() {
+      conditionsContainer.querySelectorAll(".condition-row").forEach((row, i) => {
+        const lbl = row.querySelector("label");
+        if (lbl) lbl.textContent = "Condition " + (i + 1);
+      });
+    }
+
+    function updateConditionFields(row) {
+      const type = row.querySelector(".if-left-type").value;
+      const inputsDiv = row.querySelector(".if-left-inputs");
+      const compDiv = row.querySelector(".if-comparison");
+
+      // Build left inputs
+      let leftHtml = "";
+      switch (type) {
+        case "state":
+          leftHtml = '<div><label>Device</label><input type="text" class="if-device" list="fhemDevices" placeholder="device" spellcheck="false"></div>';
+          break;
+        case "reading":
+        case "reading-num":
+          leftHtml =
+            '<div><label>Device</label><input type="text" class="if-device" list="fhemDevices" placeholder="device" spellcheck="false"></div>' +
+            '<div><label>Reading</label><input type="text" class="if-reading" list="fhemReadings" placeholder="reading" spellcheck="false"></div>';
+          break;
+        case "readingsval":
+          leftHtml =
+            '<div><label>Device</label><input type="text" class="if-device" list="fhemDevices" placeholder="device" spellcheck="false"></div>' +
+            '<div><label>Reading</label><input type="text" class="if-reading" list="fhemReadings" placeholder="reading" spellcheck="false"></div>' +
+            '<div><label>Default</label><input type="text" class="if-default" placeholder="default" spellcheck="false"></div>';
+          break;
+        case "value":
+          leftHtml = '<div><label>Device</label><input type="text" class="if-device" list="fhemDevices" placeholder="device" spellcheck="false"></div>';
+          break;
+        case "variable":
+          leftHtml =
+            '<div><label>Variable</label>' +
+            '<select class="if-variable">' +
+              '<option value="$we">$we (weekend)</option>' +
+              '<option value="$wday">$wday (weekday 0-6)</option>' +
+              '<option value="$hour">$hour</option>' +
+              '<option value="$min">$min</option>' +
+              '<option value="$hms">$hms (HH:MM:SS)</option>' +
+            '</select></div>';
+          break;
+        case "custom":
+          leftHtml = '<div style="flex:2"><label>Expression</label><input type="text" class="if-custom" placeholder=\'e.g. ReadingsAge("device","reading",0)\' spellcheck="false"></div>';
+          break;
+      }
+      inputsDiv.innerHTML = leftHtml;
+
+      // Build comparison (operator + right value)
+      if (type === "custom") {
+        compDiv.innerHTML = '';
+        compDiv.style.display = "none";
+      } else {
+        compDiv.style.display = "";
+        compDiv.innerHTML =
+          '<div style="min-width:130px">' +
+            '<label>Operator</label>' +
+            '<select class="if-operator">' +
+              '<option value="==">== (numeric eq)</option>' +
+              '<option value="!=">!= (numeric ne)</option>' +
+              '<option value=">">&gt; (greater)</option>' +
+              '<option value="<">&lt; (less)</option>' +
+              '<option value=">=">&gt;=</option>' +
+              '<option value="<=">&lt;=</option>' +
+              '<option value="eq">eq (string eq)</option>' +
+              '<option value="ne">ne (string ne)</option>' +
+              '<option value="=~">=~ (regex)</option>' +
+              '<option value="!~">!~ (no match)</option>' +
+            '</select>' +
+          '</div>' +
+          '<div>' +
+            '<label>Value</label>' +
+            '<input type="text" class="if-right" placeholder="value" spellcheck="false">' +
+          '</div>';
+      }
+    }
+
+    function buildCondString(row) {
+      const type = row.querySelector(".if-left-type").value;
+      const operator = row.querySelector(".if-operator")?.value || "";
+      const right = row.querySelector(".if-right")?.value.trim() || "";
+      let left = "";
+
+      switch (type) {
+        case "state": {
+          const device = row.querySelector(".if-device")?.value.trim() || "";
+          if (!device) return "";
+          left = "[" + device + "]";
+          break;
+        }
+        case "reading": {
+          const device = row.querySelector(".if-device")?.value.trim() || "";
+          const reading = row.querySelector(".if-reading")?.value.trim() || "";
+          if (!device) return "";
+          left = "[" + device + (reading ? ":" + reading : "") + "]";
+          break;
+        }
+        case "reading-num": {
+          const device = row.querySelector(".if-device")?.value.trim() || "";
+          const reading = row.querySelector(".if-reading")?.value.trim() || "";
+          if (!device) return "";
+          left = "[" + device + (reading ? ":" + reading : "") + ":d]";
+          break;
+        }
+        case "readingsval": {
+          const device = row.querySelector(".if-device")?.value.trim() || "";
+          const reading = row.querySelector(".if-reading")?.value.trim() || "";
+          const def = row.querySelector(".if-default")?.value.trim() || "";
+          if (!device) return "";
+          left = 'ReadingsVal("' + device + '","' + reading + '","' + def + '")';
+          break;
+        }
+        case "value": {
+          const device = row.querySelector(".if-device")?.value.trim() || "";
+          if (!device) return "";
+          left = 'Value("' + device + '")';
+          break;
+        }
+        case "variable": {
+          left = row.querySelector(".if-variable")?.value || "$we";
+          break;
+        }
+        case "custom": {
+          return row.querySelector(".if-custom")?.value.trim() || "";
+        }
+      }
+
+      if (!left) return "";
+      if (!right) return left;
+
+      // Auto-quote for string operators
+      let rightVal = right;
+      if ((operator === "eq" || operator === "ne") && !right.startsWith('"') && !right.startsWith("'")) {
+        rightVal = '"' + right + '"';
+      }
+
+      return left + " " + operator + " " + rightVal;
+    }
+
+    function buildFullCondition() {
+      const rows = conditionsContainer.querySelectorAll(".condition-row");
+      const parts = [];
+      rows.forEach((row, i) => {
+        const cond = buildCondString(row);
+        if (!cond) return;
+        if (i > 0) {
+          const prev = row.previousElementSibling;
+          if (prev && prev.classList.contains("condition-connector")) {
+            parts.push(prev.querySelector(".cond-logic").value);
+          }
+        }
+        parts.push(cond);
+      });
+      return parts.join(" ");
+    }
+
+    function buildIfOutput() {
+      const condition = buildFullCondition();
+      const ifCmds = getCommandValues(ifCommandsContainer, "if-cmd-input");
+      const elseCmds = getCommandValues(ifElseCommandsContainer, "if-else-cmd-input");
+
+      if (!condition && ifCmds.length === 0) return { text: "", raw: "" };
+
+      const condStr = condition || "<condition>";
+      const ifCmdStr = ifCmds.length > 0 ? ifCmds.join(", ") : "<command>";
+      let result = "IF (" + condStr + ") (" + ifCmdStr + ")";
+
+      if (elseCmds.length > 0) {
+        result += " ELSE (" + elseCmds.join(", ") + ")";
+      }
+
+      return { text: result, raw: result };
+    }
+
+    // Syntax highlighting for IF
+    function highlightIf(text) {
+      // Highlight IF ... ELSE structure
+      let html = escapeHtml(text);
+      // Highlight keywords
+      html = html.replace(/^IF\b/, '<span class="syn-keyword">IF</span>');
+      html = html.replace(/\bELSE\b/, '<span class="syn-keyword">ELSE</span>');
+      return html;
+    }
+
+    function updateIf() {
+      const { text, raw } = buildIfOutput();
+
+      // Update ELSE badge
+      const elseCmds = getCommandValues(ifElseCommandsContainer, "if-else-cmd-input");
+      elseBadge.style.display = elseCmds.length > 0 ? "" : "none";
+
+      if (!text) {
+        preview.innerHTML = makeSendButton("ifPreview", () => buildIfOutput().raw) +
+          '<button class="btn-copy" data-preview="ifPreview">Copy</button>' +
+          '<span class="placeholder">Build a condition above...</span>';
+      } else {
+        preview.innerHTML = makeSendButton("ifPreview", () => buildIfOutput().raw) +
+          '<button class="btn-copy" data-preview="ifPreview">Copy</button>' + highlightIf(text);
+      }
+
+      preview.querySelector(".btn-copy").addEventListener("click", () => {
+        copyToClipboard(buildIfOutput().raw, preview.querySelector(".btn-copy"));
+      });
+      bindSendButton(preview, () => buildIfOutput().raw);
+    }
+
+    // Button handlers
+    document.getElementById("btnAddIfCond").addEventListener("click", () => { createConditionRow(); updateIf(); });
+    document.getElementById("btnAddIfCmd").addEventListener("click", () => { addCommandRow(ifCommandsContainer, "if-cmd-input", "e.g. set device on"); updateIf(); });
+    document.getElementById("btnAddIfElseCmd").addEventListener("click", () => { addCommandRow(ifElseCommandsContainer, "if-else-cmd-input", "e.g. set device off"); updateIf(); });
+
+    // Listen to inputs within the if panel
+    const ifPanel = document.querySelector('.tab-panel[data-tab="if"]');
+    ifPanel.addEventListener("input", updateIf);
+    ifPanel.addEventListener("change", updateIf);
+
+    // Initialize with one condition row
+    createConditionRow();
+    updateIf();
+  })();
+
+  // ============================================================
+  // DOIF ASSISTANT
+  // ============================================================
+  (function initDoif() {
+    const doifName = document.getElementById("doifName");
+    const doifNameError = document.getElementById("doifNameError");
+    const blocksContainer = document.getElementById("doifBlocks");
+    const preview = document.getElementById("doifPreview");
+    const attrBadge = document.getElementById("doifAttrBadge");
+
+    setupCollapsible(
+      document.getElementById("doifAttrToggle"),
+      document.getElementById("doifAttrContent")
+    );
+
+    // Name validation
+    doifName.addEventListener("input", () => { validateName(doifName, doifNameError); updateDoif(); });
+
+    // Mode switching
+    document.querySelectorAll('input[name="doifMode"]').forEach(r => {
+      r.addEventListener("change", () => {
+        const mode = document.querySelector('input[name="doifMode"]:checked').value;
+        document.getElementById("doifFhemMode").style.display = mode === "fhem" ? "" : "none";
+        document.getElementById("doifPerlMode").style.display = mode === "perl" ? "" : "none";
+        updateDoif();
+      });
+    });
+
+    // --- FHEM Mode Block Management ---
+    let blockIdCounter = 0;
+    let hasDoelse = false;
+
+    function createBlock(type) {
+      blockIdCounter++;
+      const id = blockIdCounter;
+
+      const block = document.createElement("div");
+      block.className = "doif-block";
+      block.dataset.blockId = id;
+      block.dataset.blockType = type;
+
+      const isDoelse = type === "DOELSE";
+      const isFirst = type === "DOIF";
+
+      block.innerHTML =
+        '<div class="doif-block-header">' +
+          '<span class="doif-block-type">' + escapeHtml(type) + '</span>' +
+          (!isFirst ? '<button class="btn-remove block-remove" title="Remove">&times;</button>' : '') +
+        '</div>' +
+        (!isDoelse ?
+          '<div style="margin-bottom:0.5rem">' +
+            '<label>Condition</label>' +
+            '<input type="text" class="doif-cond-input" placeholder="e.g. [sensor:temperature] < 18" spellcheck="false">' +
+            '<div class="condition-helpers">' +
+              '<span class="help" style="margin:0;padding-top:0.1rem">Insert:</span>' +
+              '<button class="btn-helper" data-tpl="[device:reading]">Reading</button>' +
+              '<button class="btn-helper" data-tpl="[HH:MM]">Time</button>' +
+              '<button class="btn-helper" data-tpl="[HH:MM-HH:MM]">Range</button>' +
+              '<button class="btn-helper" data-tpl="[?HH:MM-HH:MM]">Range?</button>' +
+              '<button class="btn-helper" data-tpl="[HH:MM|Mo,Di,Mi,Do,Fr]">Weekdays</button>' +
+              '<button class="btn-helper" data-tpl="[$we]">$we</button>' +
+              '<button class="btn-helper" data-tpl="[!$we]">!$we</button>' +
+            '</div>' +
+          '</div>'
+          : '') +
+        '<div>' +
+          '<label>Commands</label>' +
+          '<div class="doif-cmds">' +
+            '<div class="command-entry">' +
+              '<span class="cmd-number">1.</span>' +
+              '<input type="text" class="doif-cmd-input" placeholder="e.g. set heater on" spellcheck="false">' +
+            '</div>' +
+          '</div>' +
+          '<button class="btn-add doif-add-cmd" style="margin-top:0.35rem">+ Add command</button>' +
+          '<div class="help" style="margin-top:0.25rem">Multiple commands are joined with <code>,</code></div>' +
+        '</div>';
+
+      blocksContainer.appendChild(block);
+
+      // Helper buttons insert text at cursor in condition input
+      block.querySelectorAll(".btn-helper").forEach(btn => {
+        btn.addEventListener("click", (e) => {
+          e.preventDefault();
+          const input = block.querySelector(".doif-cond-input");
+          if (!input) return;
+          const tpl = btn.dataset.tpl;
+          const start = input.selectionStart;
+          const end = input.selectionEnd;
+          const val = input.value;
+          input.value = val.substring(0, start) + tpl + val.substring(end);
+          input.selectionStart = input.selectionEnd = start + tpl.length;
+          input.focus();
+          updateDoif();
+        });
+      });
+
+      // Add command button
+      const cmdsContainer = block.querySelector(".doif-cmds");
+      block.querySelector(".doif-add-cmd").addEventListener("click", () => {
+        addCommandRow(cmdsContainer, "doif-cmd-input", "e.g. set device off");
+        updateDoif();
+      });
+
+      // Remove block
+      const removeBtn = block.querySelector(".block-remove");
+      if (removeBtn) {
+        removeBtn.addEventListener("click", () => {
+          if (type === "DOELSE") hasDoelse = false;
+          block.remove();
+          updateDoelseButton();
+          updateDoif();
+        });
+      }
+
+      if (type === "DOELSE") hasDoelse = true;
+      updateDoelseButton();
+    }
+
+    function updateDoelseButton() {
+      document.getElementById("btnAddDoelse").style.display = hasDoelse ? "none" : "";
+    }
+
+    // Block add buttons
+    document.getElementById("btnAddDoelseif").addEventListener("click", () => {
+      // Insert DOELSEIF before DOELSE if it exists
+      const doelseBlock = blocksContainer.querySelector('[data-block-type="DOELSE"]');
+      if (doelseBlock) {
+        // Create the block and insert before DOELSE
+        blockIdCounter++;
+        const id = blockIdCounter;
+        const block = document.createElement("div");
+        block.className = "doif-block";
+        block.dataset.blockId = id;
+        block.dataset.blockType = "DOELSEIF";
+        block.innerHTML =
+          '<div class="doif-block-header">' +
+            '<span class="doif-block-type">DOELSEIF</span>' +
+            '<button class="btn-remove block-remove" title="Remove">&times;</button>' +
+          '</div>' +
+          '<div style="margin-bottom:0.5rem">' +
+            '<label>Condition</label>' +
+            '<input type="text" class="doif-cond-input" placeholder="e.g. [sensor:temperature] > 22" spellcheck="false">' +
+            '<div class="condition-helpers">' +
+              '<span class="help" style="margin:0;padding-top:0.1rem">Insert:</span>' +
+              '<button class="btn-helper" data-tpl="[device:reading]">Reading</button>' +
+              '<button class="btn-helper" data-tpl="[HH:MM]">Time</button>' +
+              '<button class="btn-helper" data-tpl="[HH:MM-HH:MM]">Range</button>' +
+              '<button class="btn-helper" data-tpl="[?HH:MM-HH:MM]">Range?</button>' +
+              '<button class="btn-helper" data-tpl="[HH:MM|Mo,Di,Mi,Do,Fr]">Weekdays</button>' +
+              '<button class="btn-helper" data-tpl="[$we]">$we</button>' +
+              '<button class="btn-helper" data-tpl="[!$we]">!$we</button>' +
+            '</div>' +
+          '</div>' +
+          '<div>' +
+            '<label>Commands</label>' +
+            '<div class="doif-cmds">' +
+              '<div class="command-entry">' +
+                '<span class="cmd-number">1.</span>' +
+                '<input type="text" class="doif-cmd-input" placeholder="e.g. set heater off" spellcheck="false">' +
+              '</div>' +
+            '</div>' +
+            '<button class="btn-add doif-add-cmd" style="margin-top:0.35rem">+ Add command</button>' +
+            '<div class="help" style="margin-top:0.25rem">Multiple commands are joined with <code>,</code></div>' +
+          '</div>';
+
+        blocksContainer.insertBefore(block, doelseBlock);
+
+        // Setup helper buttons
+        block.querySelectorAll(".btn-helper").forEach(btn => {
+          btn.addEventListener("click", (e) => {
+            e.preventDefault();
+            const input = block.querySelector(".doif-cond-input");
+            if (!input) return;
+            const tpl = btn.dataset.tpl;
+            const start = input.selectionStart;
+            const end = input.selectionEnd;
+            const val = input.value;
+            input.value = val.substring(0, start) + tpl + val.substring(end);
+            input.selectionStart = input.selectionEnd = start + tpl.length;
+            input.focus();
+            updateDoif();
+          });
+        });
+
+        // Setup add command button
+        const cmdsContainer = block.querySelector(".doif-cmds");
+        block.querySelector(".doif-add-cmd").addEventListener("click", () => {
+          addCommandRow(cmdsContainer, "doif-cmd-input", "e.g. set device off");
+          updateDoif();
+        });
+
+        // Setup remove button
+        block.querySelector(".block-remove").addEventListener("click", () => {
+          block.remove();
+          updateDoif();
+        });
+      } else {
+        createBlock("DOELSEIF");
+      }
+      updateDoif();
+    });
+
+    document.getElementById("btnAddDoelse").addEventListener("click", () => {
+      createBlock("DOELSE");
+      updateDoif();
+    });
+
+    // --- Build DOIF output ---
+    function getDoifMode() {
+      return document.querySelector('input[name="doifMode"]:checked').value;
+    }
+
+    function buildDoifFhemOutput() {
+      const name = doifName.value.trim();
+      const displayName = name || "<name>";
+      const blocks = blocksContainer.querySelectorAll(".doif-block");
+
+      if (blocks.length === 0) return { lines: [], raw: "" };
+
+      let defParts = [];
+      let hasContent = false;
+
+      blocks.forEach(block => {
+        const type = block.dataset.blockType;
+        const condInput = block.querySelector(".doif-cond-input");
+        const condition = condInput ? condInput.value.trim() : "";
+        const cmds = getCommandValues(block.querySelector(".doif-cmds"), "doif-cmd-input");
+        const cmdStr = cmds.length > 0 ? cmds.join(", ") : "<command>";
+
+        if (cmds.length > 0 || condition) hasContent = true;
+
+        if (type === "DOELSE") {
+          defParts.push("DOELSE (" + cmdStr + ")");
+        } else {
+          const condStr = condition || "<condition>";
+          defParts.push("(" + condStr + ") (" + cmdStr + ")");
+        }
+      });
+
+      if (!hasContent && !name) return { lines: [], raw: "" };
+
+      const defineLine = "define " + displayName + " DOIF " + defParts.join(" DOELSEIF ");
+
+      // Fix: the first part shouldn't have DOELSEIF prefix, and DOELSE shouldn't either
+      // Let me rebuild properly
+      let defStr = "define " + displayName + " DOIF ";
+      const parts = [];
+      blocks.forEach((block, i) => {
+        const type = block.dataset.blockType;
+        const condInput = block.querySelector(".doif-cond-input");
+        const condition = condInput ? condInput.value.trim() : "";
+        const cmds = getCommandValues(block.querySelector(".doif-cmds"), "doif-cmd-input");
+        const cmdStr = cmds.length > 0 ? cmds.join(", ") : "<command>";
+
+        if (type === "DOIF") {
+          const condStr = condition || "<condition>";
+          parts.push("(" + condStr + ") (" + cmdStr + ")");
+        } else if (type === "DOELSEIF") {
+          const condStr = condition || "<condition>";
+          parts.push("DOELSEIF (" + condStr + ") (" + cmdStr + ")");
+        } else if (type === "DOELSE") {
+          parts.push("DOELSE (" + cmdStr + ")");
+        }
+      });
+
+      defStr += parts.join(" ");
+      const lines = [defStr];
+
+      // Add attribute lines
+      appendDoifAttrs(lines, displayName);
+
+      return { lines, raw: lines.join("\n") };
+    }
+
+    function buildDoifPerlOutput() {
+      const name = doifName.value.trim();
+      const displayName = name || "<name>";
+      const code = document.getElementById("doifPerlCode").value.trim();
+      const blockName = document.getElementById("doifPerlBlock").value.trim();
+
+      if (!code && !name) return { lines: [], raw: "" };
+
+      let codeStr = code || "<perl code>";
+      // Ensure wrapped in braces
+      if (codeStr !== "<perl code>" && !codeStr.startsWith("{")) codeStr = "{ " + codeStr + " }";
+
+      let defStr = "define " + displayName + " DOIF ";
+      if (blockName) {
+        defStr += blockName + " " + codeStr;
+      } else {
+        defStr += codeStr;
+      }
+
+      const lines = [defStr];
+      appendDoifAttrs(lines, displayName);
+
+      return { lines, raw: lines.join("\n") };
+    }
+
+    function appendDoifAttrs(lines, name) {
+      const doVal = document.getElementById("doifAttrDo").value;
+      if (doVal) lines.push("attr " + name + " do " + doVal);
+
+      const wait = document.getElementById("doifAttrWait").value.trim();
+      if (wait) lines.push("attr " + name + " wait " + wait);
+
+      const cmdpause = document.getElementById("doifAttrCmdpause").value.trim();
+      if (cmdpause) lines.push("attr " + name + " cmdpause " + cmdpause);
+
+      if (document.getElementById("doifAttrTimerWithWait").checked) lines.push("attr " + name + " timerWithWait 1");
+
+      const repeatcmd = document.getElementById("doifAttrRepeatcmd").value.trim();
+      if (repeatcmd) lines.push("attr " + name + " repeatcmd " + repeatcmd);
+
+      const cmdState = document.getElementById("doifAttrCmdState").value.trim();
+      if (cmdState) lines.push("attr " + name + " cmdState " + cmdState);
+
+      const initialize = document.getElementById("doifAttrInitialize").value.trim();
+      if (initialize) lines.push("attr " + name + " initialize " + initialize);
+
+      const startup = document.getElementById("doifAttrStartup").value.trim();
+      if (startup) lines.push("attr " + name + " startup " + startup);
+
+      if (document.getElementById("doifAttrDisable").checked) lines.push("attr " + name + " disable 1");
+    }
+
+    function hasAnyDoifAttr() {
+      return document.getElementById("doifAttrDo").value !== "" ||
+        document.getElementById("doifAttrWait").value.trim() !== "" ||
+        document.getElementById("doifAttrCmdpause").value.trim() !== "" ||
+        document.getElementById("doifAttrTimerWithWait").checked ||
+        document.getElementById("doifAttrRepeatcmd").value.trim() !== "" ||
+        document.getElementById("doifAttrCmdState").value.trim() !== "" ||
+        document.getElementById("doifAttrInitialize").value.trim() !== "" ||
+        document.getElementById("doifAttrStartup").value.trim() !== "" ||
+        document.getElementById("doifAttrDisable").checked;
+    }
+
+    // Syntax highlighting for DOIF
+    function highlightDoifLine(line) {
+      if (line.startsWith("define ")) return highlightDoifDefine(line);
+      if (line.startsWith("attr ")) return highlightDoifAttr(line);
+      return escapeHtml(line);
+    }
+
+    function highlightDoifDefine(line) {
+      // Pattern: define <name> DOIF <rest>
+      const m = line.match(/^(define\s+)(\S+)(\s+DOIF\s+)([\s\S]*)$/);
+      if (!m) return escapeHtml(line);
+
+      return '<span class="syn-keyword">' + escapeHtml(m[1].trimEnd()) + '</span> ' +
+        '<span class="syn-name">' + escapeHtml(m[2]) + '</span>' +
+        '<span class="syn-keyword">' + escapeHtml(m[3].trimEnd()) + '</span> ' +
+        highlightDoifBody(m[4]);
+    }
+
+    function highlightDoifBody(body) {
+      // Highlight DOELSEIF, DOELSE keywords and parenthesized sections
+      let html = escapeHtml(body);
+      html = html.replace(/\bDOELSEIF\b/g, '<span class="syn-keyword">DOELSEIF</span>');
+      html = html.replace(/\bDOELSE\b/g, '<span class="syn-keyword">DOELSE</span>');
+      return html;
+    }
+
+    function highlightDoifAttr(line) {
+      const m = line.match(/^(attr\s+)(\S+)(\s+)(\S+)(\s+)([\s\S]*)$/);
+      if (!m) return escapeHtml(line);
+      return '<span class="syn-keyword">' + escapeHtml(m[1].trimEnd()) + '</span> ' +
+        '<span class="syn-name">' + escapeHtml(m[2]) + '</span>' +
+        m[3] + '<span class="syn-attr">' + escapeHtml(m[4]) + '</span>' +
+        m[5] + '<span class="syn-val">' + escapeHtml(m[6]) + '</span>';
+    }
+
+    function updateDoif() {
+      const mode = getDoifMode();
+      const { lines, raw } = mode === "fhem" ? buildDoifFhemOutput() : buildDoifPerlOutput();
+
+      // Update attr badge
+      attrBadge.style.display = hasAnyDoifAttr() ? "" : "none";
+
+      const getDoifRaw = () => {
+        const m = getDoifMode();
+        return (m === "fhem" ? buildDoifFhemOutput() : buildDoifPerlOutput()).raw;
+      };
+
+      if (lines.length === 0) {
+        preview.innerHTML = makeSendButton("doifPreview", getDoifRaw) +
+          '<button class="btn-copy" data-preview="doifPreview">Copy</button>' +
+          '<span class="placeholder">Fill in the form above...</span>';
+      } else {
+        const highlighted = lines.map(highlightDoifLine).join("\n");
+        preview.innerHTML = makeSendButton("doifPreview", getDoifRaw) +
+          '<button class="btn-copy" data-preview="doifPreview">Copy</button>' + highlighted;
+      }
+
+      preview.querySelector(".btn-copy").addEventListener("click", () => {
+        copyToClipboard(getDoifRaw(), preview.querySelector(".btn-copy"));
+      });
+      bindSendButton(preview, getDoifRaw);
+    }
+
+    // Listen to inputs within the doif panel
+    const doifPanel = document.querySelector('.tab-panel[data-tab="doif"]');
+    doifPanel.addEventListener("input", updateDoif);
+    doifPanel.addEventListener("change", updateDoif);
+
+    // Initialize with first DOIF block
+    createBlock("DOIF");
+    updateDoelseButton();
+    updateDoif();
+  })();
+
+  // ============================================================
+  // DEFINE ASSISTANT
+  // ============================================================
+  (function initDefine() {
+    const defName = document.getElementById("defineDefName");
+    const defNameError = document.getElementById("defineDefNameError");
+    const typeSelect = document.getElementById("defineDeviceType");
+    const typeFieldsCard = document.getElementById("defineTypeFieldsCard");
+    const typeFieldsTitle = document.getElementById("defineTypeFieldsTitle");
+    const typeFields = document.getElementById("defineTypeFields");
+    const preview = document.getElementById("definePreview");
+    const attrBadge = document.getElementById("defineAttrBadge");
+    const mqttAttrs = document.getElementById("defineMqttAttrs");
+    const notifyAttrs = document.getElementById("defineNotifyAttrs");
+
+    setupCollapsible(
+      document.getElementById("defineAttrToggle"),
+      document.getElementById("defineAttrContent")
+    );
+
+    // Name validation
+    defName.addEventListener("input", () => { validateName(defName, defNameError); updateDefine(); });
+
+    // Type selector
+    typeSelect.addEventListener("change", () => { updateTypeFields(); updateDefine(); });
+
+    // --- Type-specific field templates ---
+    const typeTemplates = {
+      custom: {
+        title: "Custom Type",
+        html:
+          '<div style="margin-bottom:0.75rem">' +
+            '<label for="defineCustomType">Type</label>' +
+            '<input type="text" id="defineCustomType" placeholder="e.g. CUL_HM" spellcheck="false">' +
+          '</div>' +
+          '<div>' +
+            '<label for="defineCustomArgs">Arguments</label>' +
+            '<input type="text" id="defineCustomArgs" placeholder="e.g. 12345678" spellcheck="false">' +
+            '<div class="help">Free-form arguments passed after the type</div>' +
+          '</div>'
+      },
+      notify: {
+        title: "notify Parameters",
+        html:
+          '<div style="margin-bottom:0.75rem">' +
+            '<label for="defineNotifyPattern">Event Pattern</label>' +
+            '<input type="text" id="defineNotifyPattern" list="fhemDevices" placeholder="e.g. device:event.*" spellcheck="false">' +
+            '<div class="help">Regexp matching device:event (e.g. <code>lamp:on</code>, <code>.*:temperature.*</code>)</div>' +
+          '</div>' +
+          '<div>' +
+            '<label for="defineNotifyCmd">Command</label>' +
+            '<input type="text" id="defineNotifyCmd" placeholder="e.g. set lamp2 on" spellcheck="false">' +
+            '<div class="help">FHEM command(s) or <code>{ perl }</code> to execute</div>' +
+          '</div>'
+      },
+      watchdog: {
+        title: "watchdog Parameters",
+        html:
+          '<div style="margin-bottom:0.75rem">' +
+            '<label for="defineWdRegexp1">Regexp1 (trigger start)</label>' +
+            '<input type="text" id="defineWdRegexp1" list="fhemDevices" placeholder="e.g. device1:on" spellcheck="false">' +
+            '<div class="help">Start event pattern</div>' +
+          '</div>' +
+          '<div style="margin-bottom:0.75rem">' +
+            '<label for="defineWdTimeout">Timeout (HH:MM:SS or seconds)</label>' +
+            '<input type="text" id="defineWdTimeout" placeholder="e.g. 00:05:00" spellcheck="false">' +
+          '</div>' +
+          '<div style="margin-bottom:0.75rem">' +
+            '<label for="defineWdRegexp2">Regexp2 (cancel event)</label>' +
+            '<input type="text" id="defineWdRegexp2" list="fhemDevices" placeholder="e.g. device1:off" spellcheck="false">' +
+            '<div class="help">If matched before timeout, watchdog is cancelled</div>' +
+          '</div>' +
+          '<div>' +
+            '<label for="defineWdCmd">Command (on timeout)</label>' +
+            '<input type="text" id="defineWdCmd" placeholder="e.g. set device2 off" spellcheck="false">' +
+          '</div>'
+      },
+      FileLog: {
+        title: "FileLog Parameters",
+        html:
+          '<div style="margin-bottom:0.75rem">' +
+            '<label for="defineFileLogName">Log Filename</label>' +
+            '<input type="text" id="defineFileLogName" placeholder="e.g. ./log/mydevice-%Y-%m.log" spellcheck="false">' +
+            '<div class="help">Path with optional strftime placeholders</div>' +
+          '</div>' +
+          '<div>' +
+            '<label for="defineFileLogRegexp">Regexp</label>' +
+            '<input type="text" id="defineFileLogRegexp" list="fhemDevices" placeholder="e.g. mydevice:.*" spellcheck="false">' +
+            '<div class="help">Events to log (device:reading pattern)</div>' +
+          '</div>'
+      },
+      readingsProxy: {
+        title: "readingsProxy Parameters",
+        html:
+          '<div style="margin-bottom:0.75rem">' +
+            '<label for="defineRpDevice">Device</label>' +
+            '<input type="text" id="defineRpDevice" list="fhemDevices" placeholder="e.g. myDevice" spellcheck="false">' +
+          '</div>' +
+          '<div>' +
+            '<label for="defineRpReading">Reading</label>' +
+            '<input type="text" id="defineRpReading" list="fhemReadings" placeholder="e.g. temperature" spellcheck="false">' +
+          '</div>'
+      },
+      structure: {
+        title: "structure Parameters",
+        html:
+          '<div style="margin-bottom:0.75rem">' +
+            '<label for="defineStructType">Structure Type</label>' +
+            '<input type="text" id="defineStructType" placeholder="e.g. room" spellcheck="false">' +
+            '<div class="help">Type name for the structure group</div>' +
+          '</div>' +
+          '<div>' +
+            '<label for="defineStructDevices">Devices</label>' +
+            '<input type="text" id="defineStructDevices" list="fhemDevices" placeholder="e.g. lamp1,lamp2,lamp3" spellcheck="false">' +
+            '<div class="help">Comma or space-separated device names</div>' +
+          '</div>'
+      },
+      Tasmota: {
+        title: "Tasmota Parameters",
+        html:
+          '<div>' +
+            '<label for="defineTasmotaHost">Host / IP</label>' +
+            '<input type="text" id="defineTasmotaHost" placeholder="e.g. 192.168.1.100" spellcheck="false">' +
+          '</div>'
+      }
+    };
+
+    function updateTypeFields() {
+      const type = typeSelect.value;
+
+      // Show/hide MQTT and notify extra attrs
+      mqttAttrs.style.display = type === "MQTT2_DEVICE" ? "" : "none";
+      notifyAttrs.style.display = type === "notify" ? "" : "none";
+
+      const tpl = typeTemplates[type];
+      if (!tpl) {
+        // dummy and MQTT2_DEVICE have no parameters
+        typeFieldsCard.style.display = "none";
+        typeFields.innerHTML = "";
+        return;
+      }
+      typeFieldsCard.style.display = "";
+      typeFieldsTitle.textContent = tpl.title;
+      typeFields.innerHTML = tpl.html;
+
+      // Wire up dynamic reading list for readingsProxy device field
+      if (type === "readingsProxy") {
+        const devInput = document.getElementById("defineRpDevice");
+        const readInput = document.getElementById("defineRpReading");
+        if (devInput && readInput) {
+          readInput.addEventListener("focus", () => {
+            if (typeof updateReadingsDatalist === "function") {
+              updateReadingsDatalist(devInput.value);
+            }
+          });
+        }
+      }
+
+      // Re-bind input events for new fields
+      typeFields.addEventListener("input", updateDefine);
+      typeFields.addEventListener("change", updateDefine);
+    }
+
+    function getDefineMod() {
+      return document.querySelector('input[name="defineMod"]:checked').value;
+    }
+
+    function buildDefineOutput() {
+      const lines = [];
+      const name = defName.value.trim();
+      const mod = getDefineMod();
+      const type = typeSelect.value;
+
+      if (!name) return { lines: [], raw: "" };
+      if (!validateName(defName, defNameError)) return { lines: [], raw: "" };
+
+      let defLine = "";
+      if (type === "custom") {
+        const cType = (document.getElementById("defineCustomType") || {}).value || "";
+        const cArgs = (document.getElementById("defineCustomArgs") || {}).value || "";
+        if (!cType.trim()) return { lines: [], raw: "" };
+        defLine = mod + " " + name + " " + cType.trim();
+        if (cArgs.trim()) defLine += " " + cArgs.trim();
+      } else if (type === "dummy") {
+        defLine = mod + " " + name + " dummy";
+      } else if (type === "notify") {
+        const pattern = (document.getElementById("defineNotifyPattern") || {}).value || "";
+        const cmd = (document.getElementById("defineNotifyCmd") || {}).value || "";
+        if (!pattern.trim()) return { lines: [], raw: "" };
+        defLine = mod + " " + name + " notify " + pattern.trim();
+        if (cmd.trim()) defLine += " " + cmd.trim();
+      } else if (type === "watchdog") {
+        const r1 = (document.getElementById("defineWdRegexp1") || {}).value || "";
+        const t = (document.getElementById("defineWdTimeout") || {}).value || "";
+        const r2 = (document.getElementById("defineWdRegexp2") || {}).value || "";
+        const cmd = (document.getElementById("defineWdCmd") || {}).value || "";
+        if (!r1.trim() || !t.trim() || !r2.trim()) return { lines: [], raw: "" };
+        defLine = mod + " " + name + " watchdog " + r1.trim() + " " + t.trim() + " " + r2.trim() + " " + cmd.trim();
+      } else if (type === "FileLog") {
+        const fn = (document.getElementById("defineFileLogName") || {}).value || "";
+        const rx = (document.getElementById("defineFileLogRegexp") || {}).value || "";
+        if (!fn.trim() || !rx.trim()) return { lines: [], raw: "" };
+        defLine = mod + " " + name + " FileLog " + fn.trim() + " " + rx.trim();
+      } else if (type === "readingsProxy") {
+        const dev = (document.getElementById("defineRpDevice") || {}).value || "";
+        const rdg = (document.getElementById("defineRpReading") || {}).value || "";
+        if (!dev.trim() || !rdg.trim()) return { lines: [], raw: "" };
+        defLine = mod + " " + name + " readingsProxy " + dev.trim() + " " + rdg.trim();
+      } else if (type === "structure") {
+        const sType = (document.getElementById("defineStructType") || {}).value || "";
+        const devs = (document.getElementById("defineStructDevices") || {}).value || "";
+        if (!sType.trim()) return { lines: [], raw: "" };
+        const devList = devs.trim().split(/[\s,]+/).filter(Boolean).join(" ");
+        defLine = mod + " " + name + " structure " + sType.trim();
+        if (devList) defLine += " " + devList;
+      } else if (type === "MQTT2_DEVICE") {
+        defLine = mod + " " + name + " MQTT2_DEVICE";
+      } else if (type === "Tasmota") {
+        const host = (document.getElementById("defineTasmotaHost") || {}).value || "";
+        if (!host.trim()) return { lines: [], raw: "" };
+        defLine = mod + " " + name + " Tasmota " + host.trim();
+      }
+
+      if (defLine) lines.push(defLine);
+
+      // Common attributes
+      const room = document.getElementById("defineAttrRoom").value.trim();
+      const group = document.getElementById("defineAttrGroup").value.trim();
+      const alias = document.getElementById("defineAttrAlias").value.trim();
+      const comment = document.getElementById("defineAttrComment").value.trim();
+      const disable = document.getElementById("defineAttrDisable").checked;
+
+      if (room) lines.push("attr " + name + " room " + room);
+      if (group) lines.push("attr " + name + " group " + group);
+      if (alias) lines.push("attr " + name + " alias " + alias);
+      if (comment) lines.push("attr " + name + " comment " + comment);
+      if (disable) lines.push("attr " + name + " disable 1");
+
+      // MQTT2_DEVICE extra attrs
+      if (type === "MQTT2_DEVICE") {
+        const ioDev = document.getElementById("defineAttrIODev").value.trim();
+        const readingList = document.getElementById("defineAttrReadingList").value.trim();
+        const setList = document.getElementById("defineAttrSetList").value.trim();
+        if (ioDev) lines.push("attr " + name + " IODev " + ioDev);
+        if (readingList) lines.push("attr " + name + " readingList " + readingList);
+        if (setList) lines.push("attr " + name + " setList " + setList);
+      }
+
+      // Notify extra attrs
+      if (type === "notify") {
+        const dfi = document.getElementById("defineAttrDisabledForIntervals").value.trim();
+        if (dfi) lines.push("attr " + name + " disabledForIntervals " + dfi);
+      }
+
+      return { lines: lines, raw: lines.join("\n") };
+    }
+
+    function highlightDefineLine(line) {
+      // Match define/defmod line
+      const dm = line.match(/^(define|defmod)(\s+)(\S+)(\s+)(\S+)([\s\S]*)$/);
+      if (dm) {
+        let result = '<span class="syn-keyword">' + escapeHtml(dm[1]) + '</span>' +
+          dm[2] + '<span class="syn-name">' + escapeHtml(dm[3]) + '</span>' +
+          dm[4] + '<span class="syn-keyword">' + escapeHtml(dm[5]) + '</span>';
+        if (dm[6]) result += '<span class="syn-val">' + escapeHtml(dm[6]) + '</span>';
+        return result;
+      }
+      // Match attr line
+      const am = line.match(/^(attr\s+)(\S+)(\s+)(\S+)(\s+)([\s\S]*)$/);
+      if (am) {
+        return '<span class="syn-keyword">' + escapeHtml(am[1].trimEnd()) + '</span> ' +
+          '<span class="syn-name">' + escapeHtml(am[2]) + '</span>' +
+          am[3] + '<span class="syn-attr">' + escapeHtml(am[4]) + '</span>' +
+          am[5] + '<span class="syn-val">' + escapeHtml(am[6]) + '</span>';
+      }
+      return escapeHtml(line);
+    }
+
+    function hasAnyDefineAttr() {
+      if (document.getElementById("defineAttrRoom").value.trim()) return true;
+      if (document.getElementById("defineAttrGroup").value.trim()) return true;
+      if (document.getElementById("defineAttrAlias").value.trim()) return true;
+      if (document.getElementById("defineAttrComment").value.trim()) return true;
+      if (document.getElementById("defineAttrDisable").checked) return true;
+      const type = typeSelect.value;
+      if (type === "MQTT2_DEVICE") {
+        if (document.getElementById("defineAttrIODev").value.trim()) return true;
+        if (document.getElementById("defineAttrReadingList").value.trim()) return true;
+        if (document.getElementById("defineAttrSetList").value.trim()) return true;
+      }
+      if (type === "notify") {
+        if (document.getElementById("defineAttrDisabledForIntervals").value.trim()) return true;
+      }
+      return false;
+    }
+
+    function updateDefine() {
+      const { lines, raw } = buildDefineOutput();
+
+      attrBadge.style.display = hasAnyDefineAttr() ? "" : "none";
+
+      const getDefineRaw = () => buildDefineOutput().raw;
+
+      if (lines.length === 0) {
+        preview.innerHTML = makeSendButton("definePreview", getDefineRaw) +
+          '<button class="btn-copy" data-preview="definePreview">Copy</button>' +
+          '<span class="placeholder">Fill in the form above...</span>';
+      } else {
+        const highlighted = lines.map(highlightDefineLine).join("\n");
+        preview.innerHTML = makeSendButton("definePreview", getDefineRaw) +
+          '<button class="btn-copy" data-preview="definePreview">Copy</button>' + highlighted;
+      }
+
+      preview.querySelector(".btn-copy").addEventListener("click", () => {
+        copyToClipboard(getDefineRaw(), preview.querySelector(".btn-copy"));
+      });
+      bindSendButton(preview, getDefineRaw);
+    }
+
+    // Listen to inputs within the define panel
+    const definePanel = document.querySelector('.tab-panel[data-tab="define"]');
+    definePanel.addEventListener("input", updateDefine);
+    definePanel.addEventListener("change", updateDefine);
+
+    // Initialize
+    updateTypeFields();
+    updateDefine();
+  })();
+
+})();
+</script>
+</body>
+</html>
